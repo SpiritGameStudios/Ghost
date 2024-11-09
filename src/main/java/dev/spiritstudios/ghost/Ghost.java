@@ -59,6 +59,7 @@ public final class Ghost {
         StringWriter stackTrace = new StringWriter();
         PrintWriter writer = new PrintWriter(stackTrace);
         t.printStackTrace(writer);
+        t.printStackTrace();
 
         api.getTextChannelById(CONFIG.channelId())
                 .ifPresent(channel -> {

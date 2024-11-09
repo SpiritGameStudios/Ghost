@@ -27,8 +27,8 @@ dependencies {
 
     implementation(libs.datafixerupper)
     implementation(libs.fastutil)
-    implementation(libs.modrinth4j)
     implementation(libs.webp.imageio)
+    implementation(libs.okhttp)
 }
 
 application {
