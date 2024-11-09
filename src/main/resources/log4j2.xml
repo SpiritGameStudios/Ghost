@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xmlns="https://logging.apache.org/xml/ns"
+               xsi:schemaLocation="
+                       https://logging.apache.org/xml/ns
+                       https://logging.apache.org/xml/ns/log4j-config-2.xsd">
+    <Appenders>
+        <Console name="CONSOLE">
+            <PatternLayout pattern="%style{[%d{HH:mm:ss}]}{blue} %highlight{[%c/%level]}{FATAL=red, ERROR=red, WARN=yellow, INFO=green, DEBUG=magenta, TRACE=blue} %highlight{%msg%n}{FATAL=red, ERROR=red, WARN=normal, INFO=normal, DEBUG=normal, TRACE=normal}" />
+        </Console>
+
+        <RollingRandomAccessFile name="FILE" fileName="logs/latest.log" filePattern="logs/%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="%style{[%d{HH:mm:ss}]}{blue} %highlight{[%c/%level]}{FATAL=red, ERROR=red, WARN=yellow, INFO=green, DEBUG=magenta, TRACE=blue} %highlight{%msg%n}{FATAL=red, ERROR=red, WARN=normal, INFO=normal, DEBUG=normal, TRACE=normal}" />
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+                <OnStartupTriggeringPolicy />
+            </Policies>
+        </RollingRandomAccessFile>
+    </Appenders>
+
+    <Loggers>
+        <Logger name="dev.spiritstudios.ghost" level="${env:LOG_LEVEL:-INFO}" additivity="false">
+            <AppenderRef ref="CONSOLE" />
+        </Logger>
+
+        <Root level="ALL">
+            <AppenderRef ref="CONSOLE" level="INFO" />
+            <AppenderRef ref="FILE" level="INFO" />
+        </Root>
+    </Loggers>
+</Configuration>

@@ -1,0 +1,23 @@
+# IDE
+.idea/
+.idea_modules/
+out/
+
+# Dist
+*.class
+*.log
+*.jar
+
+# OS
+.DS_Store
+Thumbs.db
+[Dd]esktop.ini
+
+# Gradle
+.gradle
+build/
+**/build/
+run/
+
+!gradle-wrapper.jar
+
