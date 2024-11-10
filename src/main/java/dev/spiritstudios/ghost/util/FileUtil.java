@@ -25,6 +25,7 @@ public final class FileUtil {
         Path resPath = Paths.get(Resources.getResource(basePath).getPath());
         try (Stream<Path> stream = Files.walk(resPath)) {
             return stream.filter(Files::isRegularFile)
+                    .map(resPath::relativize)
                     .collect(Collectors.toList());
         } catch (IOException e) {
             throw new IllegalArgumentException(e);

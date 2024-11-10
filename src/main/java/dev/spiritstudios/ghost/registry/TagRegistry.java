@@ -42,7 +42,7 @@ public final class TagRegistry implements Registry<String> {
         ClassLoader classLoader = getClass().getClassLoader();
 
 
-        List<File> files = FileUtil.getFiles("tags")
+        List<File> files = FileUtil.getFiles("tags/")
                 .stream().map(Path::toFile)
                 .toList();
 
