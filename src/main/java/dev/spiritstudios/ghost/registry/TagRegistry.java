@@ -8,10 +8,14 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.javacord.api.interaction.SlashCommandOptionChoice;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.net.URISyntaxException;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 public final class TagRegistry implements Registry<String> {
     private static final ObjectList<String> values = new ObjectArrayList<>();
@@ -39,30 +43,38 @@ public final class TagRegistry implements Registry<String> {
     }
 
     public void load() {
-        ClassLoader classLoader = getClass().getClassLoader();
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
 
-        List<File> files = FileUtil.getFiles("tags/")
-                .stream().map(Path::toFile)
-                .toList();
 
-        if (files.isEmpty()) throw new IllegalStateException("Tags folder is empty");
+        Path tagsPath = FileUtil.getResourcePath("tags");
+        List<Path> paths;
+
+        try (Stream<Path> walk = Files.list(tagsPath);) {
+            paths = walk
+                    .map(tagsPath::relativize)
+                    .toList();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        if (paths.isEmpty()) throw new IllegalStateException("Tags folder is empty");
 
         Map<String, String> alias = new Object2ObjectOpenHashMap<>();
 
-        for (File file : files) {
-            String content = FileUtil.getResource("tags/" + file.getName(), classLoader);
-            if (file.getName().endsWith(".md")) {
+        for (Path path : paths) {
+            String content = FileUtil.getResource("tags/" + path.toString(), classLoader);
+            if (path.toString().endsWith(".md")) {
                 register(
-                        file.getName().replace(".md", ""),
+                        path.toString().replace(".md", ""),
                         content
                 );
 
                 continue;
             }
 
-            if (file.getName().endsWith(".alias"))
-                alias.put(file.getName().replace(".alias", ""), content);
+            if (path.toString().endsWith(".alias"))
+                alias.put(path.toString().replace(".alias", ""), content);
         }
 
         alias.forEach(this::registerAlias);

@@ -17,6 +17,7 @@ import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.util.logging.FallbackLoggerConfiguration;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -37,7 +38,11 @@ public final class Ghost {
         Commands.init();
         Registries.COMMAND.freeze();
 
-        Registries.TAG.load();
+        try {
+            Registries.TAG.load();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         Registries.TAG.freeze();
 
         api = apiBuilder.login().join();
