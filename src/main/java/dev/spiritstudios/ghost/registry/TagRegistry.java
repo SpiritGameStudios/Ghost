@@ -1,5 +1,6 @@
 package dev.spiritstudios.ghost.registry;
 
+import com.google.common.io.Resources;
 import dev.spiritstudios.ghost.util.FileUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -8,13 +9,13 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.javacord.api.interaction.SlashCommandOptionChoice;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.*;
+import java.util.*;
 import java.util.stream.Stream;
 
 public final class TagRegistry implements Registry<String> {
@@ -43,11 +44,26 @@ public final class TagRegistry implements Registry<String> {
     }
 
     public void load() {
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        URI uri;
+        try {
+            uri = Resources.getResource("tags").toURI();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
 
+        try {
+            loadInternal(Paths.get(uri));
+        } catch (FileSystemNotFoundException e) {
+            // If we get here, we are running from a jar
+            try (FileSystem fs = FileSystems.newFileSystem(uri, new HashMap<>())) {
+                loadInternal(fs.getPath("tags"));
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+    }
 
-
-        Path tagsPath = FileUtil.getResourcePath("tags");
+    private void loadInternal(Path tagsPath) {
         List<Path> paths;
 
         try (Stream<Path> walk = Files.list(tagsPath);) {
@@ -63,7 +79,7 @@ public final class TagRegistry implements Registry<String> {
         Map<String, String> alias = new Object2ObjectOpenHashMap<>();
 
         for (Path path : paths) {
-            String content = FileUtil.getResource("tags/" + path.toString(), classLoader);
+            String content = FileUtil.getResource("tags/" + path.toString(), getClass().getClassLoader());
             if (path.toString().endsWith(".md")) {
                 register(
                         path.toString().replace(".md", ""),
