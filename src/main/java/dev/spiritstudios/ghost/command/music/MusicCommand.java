@@ -149,8 +149,12 @@ public class MusicCommand implements CommandWithSubcommands {
 
                 @Override
                 public void playlistLoaded(AudioPlaylist playlist) {
-                    for (AudioTrack track : playlist.getTracks()) scheduler.push(track);
-                    updater.addEmbed(EmbedUtil.titleOnly("Playlist added to queue", CommonColors.GREEN)).update();
+                    if (!(reference.identifier.contains("search:"))) {
+                        for (AudioTrack track : playlist.getTracks()) scheduler.push(track);
+                        updater.addEmbed(EmbedUtil.titleOnly("Playlist added to queue", CommonColors.GREEN)).update();
+                    } else {
+                        trackLoaded(playlist.getTracks().getFirst());
+                    }
                 }
 
                 @Override
