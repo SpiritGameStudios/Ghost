@@ -1,9 +1,8 @@
 package dev.spiritstudios.ghost;
 
-import dev.spiritstudios.ghost.listener.AutoCompleteListener;
+import dev.spiritstudios.ghost.data.CommonColors;
 import dev.spiritstudios.ghost.registry.Registries;
 import dev.spiritstudios.ghost.util.StringUtil;
-import dev.spiritstudios.ghost.listener.CommandListener;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.javacord.api.DiscordApi;
@@ -14,24 +13,21 @@ import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.util.logging.FallbackLoggerConfiguration;
 
-import java.awt.*;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.nio.file.Path;
 
 public final class Ghost {
-    public static final GhostConfig CONFIG = GhostConfig.load(Path.of("config.json"));
     private static final Logger LOGGER = LogManager.getLogger(Ghost.class);
     private static DiscordApi api;
 
     public static void main(String[] args) {
         api = new DiscordApiBuilder()
-                .setToken(CONFIG.token())
-                .addIntents(Intent.GUILDS)
+                .setToken(GhostConfig.INSTANCE.token())
+                .addIntents(Intent.GUILDS, Intent.GUILD_VOICE_STATES)
                 .login()
                 .join();
 
-        if (CONFIG.debug()) {
+        if (GhostConfig.INSTANCE.debug()) {
             FallbackLoggerConfiguration.setDebug(true);
             api.updateActivity(ActivityType.WATCHING, "Echo struggle");
             LOGGER.debug("Debug mode enabled");
@@ -54,20 +50,19 @@ public final class Ghost {
     }
 
     public static void logError(String message, Throwable t) {
-        if (!CONFIG.debug() || CONFIG.channelId() == 0) return;
+//        if (!GhostConfig.INSTANCE.debug() || GhostConfig.INSTANCE.channelId() <= 0) return;
 
         StringWriter stackTrace = new StringWriter();
         PrintWriter writer = new PrintWriter(stackTrace);
         t.printStackTrace(writer);
-        t.printStackTrace();
 
-        api.getTextChannelById(CONFIG.channelId())
+        api.getTextChannelById(GhostConfig.INSTANCE.channelId())
                 .ifPresent(channel -> {
                     EmbedBuilder embed = new EmbedBuilder()
                             .setTitle(message)
                             .setDescription(StringUtil.truncate(("```lisp\n%s```").formatted(stackTrace.toString()), 4096))
                             .addField("Full message", t.getMessage(), false)
-                            .setColor(Color.RED);
+                            .setColor(CommonColors.RED);
 
                     new MessageBuilder()
                             .setEmbed(embed)

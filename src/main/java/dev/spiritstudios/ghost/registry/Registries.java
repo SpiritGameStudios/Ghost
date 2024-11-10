@@ -1,7 +1,6 @@
 package dev.spiritstudios.ghost.registry;
 
 import dev.spiritstudios.ghost.Ghost;
-import dev.spiritstudios.ghost.command.Command;
 import dev.spiritstudios.ghost.command.Commands;
 import dev.spiritstudios.ghost.data.CustomEmoji;
 import dev.spiritstudios.ghost.listener.Listeners;

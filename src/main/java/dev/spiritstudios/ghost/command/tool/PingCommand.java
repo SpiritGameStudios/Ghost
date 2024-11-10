@@ -1,6 +1,7 @@
 package dev.spiritstudios.ghost.command.tool;
 
 import dev.spiritstudios.ghost.command.Command;
+import dev.spiritstudios.ghost.data.CommonColors;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.interaction.SlashCommand;
@@ -27,7 +28,7 @@ public class PingCommand implements Command {
             long roundtripLatency = ChronoUnit.MILLIS.between(interaction.getCreationTimestamp(), message.getCreationTimestamp());
             long gatewayLatency = api.getLatestGatewayLatency().toMillis();
 
-            Color color = roundtripLatency < 150 ? Color.GREEN : roundtripLatency < 250 ? Color.YELLOW : Color.RED;
+            Color color = roundtripLatency < 150 ? CommonColors.GREEN : roundtripLatency < 250 ? CommonColors.YELLOW : CommonColors.RED;
 
             EmbedBuilder embed = new EmbedBuilder()
                     .setTitle("Pong!")

@@ -1,28 +1,24 @@
 package dev.spiritstudios.ghost.command.mod;
 
+import dev.callmeecho.maze.model.Project;
 import dev.spiritstudios.ghost.Ghost;
-import dev.spiritstudios.ghost.command.CommandWithSubcommand;
+import dev.spiritstudios.ghost.command.CommandWithSubcommands;
 import dev.spiritstudios.ghost.command.util.EmbedUtil;
+import dev.spiritstudios.ghost.data.CommonColors;
 import dev.spiritstudios.ghost.data.CustomEmoji;
-import dev.spiritstudios.ghost.data.modrinth.ModrinthProject;
-import dev.spiritstudios.ghost.util.*;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-import org.checkerframework.checker.units.qual.C;
+import dev.spiritstudios.ghost.util.Constants;
+import dev.spiritstudios.ghost.util.HttpHelper;
+import dev.spiritstudios.ghost.util.ImageHelper;
+import dev.spiritstudios.ghost.util.StringUtil;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.interaction.*;
-import org.slf4j.LoggerFactory;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
-public class ModrinthCommand implements CommandWithSubcommand {
+public class ModrinthCommand implements CommandWithSubcommands {
     @Override
     public Map<String, Subcommand> getSubcommands() {
         return Map.of(
@@ -49,77 +45,71 @@ public class ModrinthCommand implements CommandWithSubcommand {
     }
 
     private static class Projects {
-//        private static final Map<ProjectType, String> PROJECT_TYPE_NAMES = Map.of(
-//                ProjectType.MOD, "Mod",
-//                ProjectType.MODPACK, "Modpack",
-//                ProjectType.RESOURCEPACK, "Resource Pack"
-//        );
+        private static final Map<Project.Type, String> PROJECT_TYPE_NAMES = Map.of(
+                Project.Type.MOD, "Mod",
+                Project.Type.MODPACK, "Mod Pack",
+                Project.Type.RESOURCE_PACK, "Resource Pack",
+                Project.Type.SHADER, "Shader Pack"
+        );
 
         public static void info(SlashCommandInteraction interaction, SlashCommandInteractionOptionsProvider options, DiscordApi api) {
-            interaction.respondLater().thenCompose(updater -> {
-                String slug = options.getOptionByName("slug")
-                        .flatMap(SlashCommandInteractionOption::getStringValue)
-                        .orElseThrow();
+            String slug = options.getOptionByName("slug")
+                    .flatMap(SlashCommandInteractionOption::getStringValue)
+                    .orElseThrow();
 
-                String url = "/project/" + slug;
+            interaction.respondLater().thenCompose(updater -> Constants.MODRINTH_API.project().get(slug).thenApply(project -> {
+                if (project == null) return updater.addEmbed(EmbedUtil.error("Mod not found.")).update();
 
-                return Constants.MODRINTH_API.createRequest(url, Map.of()).thenCompose(req -> {
-                    req.method("GET", null);
-                    return Constants.MODRINTH_API.execute(req.build());
-                }).thenApply(response -> {
-                    ResponseBody body = response.body();
-                    try {
-                        return HttpHelper.checkResponse(body, ModrinthProject.CODEC);
-                    } catch (IOException e) {
-                        LoggerFactory.getLogger(Projects.class).error("", e);
-                        throw new RuntimeException(e);
-                    }
-                }).thenApply(projResult -> {
-                    if (projResult == null) return updater.addEmbed(EmbedUtil.error("Mod not found.")).update();
+                List<String> categories = StringUtil.capitalize(project.categories());
 
-                    ModrinthProject project = projResult.getOrThrow();
+                EmbedBuilder embed = new EmbedBuilder()
+                        .setTitle(project.title())
+                        .setUrl("https://modrinth.com/mod/%s".formatted(project.slug()))
+                        .setDescription(project.description())
+                        .addField("Categories", String.join("\n", categories), true)
+                        .setTimestampToNow()
+                        .setFooter(PROJECT_TYPE_NAMES.get(project.projectType()) + " on Modrinth", CustomEmoji.MODRINTH.getImage());
 
-                    List<String> categories = project.categories();
-//                    categories.replaceAll(StringUtil::capitalize);
 
-                    EmbedBuilder embed = new EmbedBuilder()
-                            .setTitle(project.title())
-                            .setUrl("https://modrinth.com/mod/%s".formatted(project.slug()))
-                            .setDescription(project.description())
-                            .addField("Categories", String.join("\n", categories), true)
-                            .setTimestampToNow()
-                            .setFooter("on Modrinth", CustomEmoji.MODRINTH.getImage());
+                if (project.loaders() != null) {
+                    List<String> loaders = StringUtil.capitalize(project.loaders());
+                    loaders.replaceAll(loader -> switch (loader) {
+                        case "Fabric" -> CustomEmoji.FABRIC.getMentionTag();
+                        case "Forge" -> CustomEmoji.LEXFORGE.getMentionTag();
+                        case "Neoforge" -> CustomEmoji.NEOFORGE.getMentionTag();
+                        case "Quilt" -> CustomEmoji.QUILT.getMentionTag();
+                        default -> CustomEmoji.UNKNOWN.getMentionTag();
+                    } + " " + loader);
 
-                    if (project.iconUrl().isPresent()) {
-                        embed.setThumbnail(project.iconUrl().get());
-                        return HttpHelper.getImage(project.iconUrl().get())
-                                .thenCompose(icon -> {
-                                    embed.setColor(new Color(ImageHelper.getCommonColor(icon)));
-                                    return updater.addEmbed(embed).update();
-                                }).whenComplete((future, throwable) -> {
-                                    if (throwable != null) updater.addEmbed(EmbedUtil.error("something")).update();
-                                    Ghost.logError("Failed modrinth command", throwable);
-                                });
-                    }
+                    embed.addInlineField("Loaders", String.join("\n", loaders));
+                }
 
-                    embed.setColor(Color.BLACK);
-                    return updater.addEmbed(embed).update();
-                }).whenComplete((future, throwable) -> {
-                    if (throwable != null) updater.addEmbed(EmbedUtil.error("something")).update();
-                    Ghost.logError("Failed modrinth command", throwable);
-                });
+                if (project.gameVersions() != null) {
+                    embed.addInlineField("Versions", StringUtil.truncate(String.join("\n", project.gameVersions()), 256));
+                }
+
+
+                if (project.iconUrl() != null) {
+                    embed.setThumbnail(project.iconUrl());
+                    return HttpHelper.getImage(project.iconUrl())
+                            .thenCompose(icon -> {
+                                embed.setColor(new Color(ImageHelper.getCommonColor(icon)));
+                                return updater.addEmbed(embed).update();
+                            }).whenComplete((ignored, throwable) -> {
+                                if (throwable == null) return;
+
+                                Ghost.logError("", throwable);
+                            });
+                }
+
+
+                embed.setColor(CommonColors.BLURPLE);
+                return updater.addEmbed(embed).update();
+            })).whenComplete((ignored, throwable) -> {
+                if (throwable == null) return;
+
+                Ghost.logError("", throwable);
             });
-
-//            interaction.respondLater().thenCompose(updater -> Constants.MODRINTH_API.projects().get(options.getOptionByName("slug").orElseThrow().getStringValue().orElseThrow())
-//                    .thenCompose(project -> {
-//
-
-//
-//                        String bannerUrl = project.getGallery().getFirst().getUrl();
-//                        if (bannerUrl != null) embed.setImage(bannerUrl);
-//
-
-//                    }));
         }
     }
 }

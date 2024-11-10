@@ -2,6 +2,7 @@ package dev.spiritstudios.ghost.command.tool;
 
 import dev.spiritstudios.ghost.command.Command;
 import dev.spiritstudios.ghost.command.util.EmbedUtil;
+import dev.spiritstudios.ghost.data.CommonColors;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.message.MessageFlag;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
@@ -72,7 +73,7 @@ public class GrabEmojiCommand implements Command {
                     EmbedBuilder embed = new EmbedBuilder()
                             .setTitle("Emoji Created")
                             .setDescription(":%s: has been created".formatted(name))
-                            .setColor(Color.GREEN)
+                            .setColor(CommonColors.GREEN)
                             .setThumbnail(url.toString());
 
                     return interaction.createImmediateResponder()

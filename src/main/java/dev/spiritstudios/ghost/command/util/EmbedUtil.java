@@ -1,5 +1,6 @@
 package dev.spiritstudios.ghost.command.util;
 
+import dev.spiritstudios.ghost.data.CommonColors;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 
 import java.awt.*;
@@ -11,12 +12,8 @@ public final class EmbedUtil {
                 .setColor(color);
     }
 
-    public static EmbedBuilder titleOnly(String title) {
-        return titleOnly(title, Color.BLACK);
-    }
-
     public static EmbedBuilder error(String error) {
-        return titleOnly(error, Color.RED);
+        return titleOnly(error, CommonColors.RED);
     }
 
     private EmbedUtil() {

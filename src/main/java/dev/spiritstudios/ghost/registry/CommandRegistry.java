@@ -1,16 +1,12 @@
 package dev.spiritstudios.ghost.registry;
 
 import dev.spiritstudios.ghost.Ghost;
+import dev.spiritstudios.ghost.GhostConfig;
 import dev.spiritstudios.ghost.command.Command;
-import dev.spiritstudios.ghost.command.debug.ErrorCommand;
-import dev.spiritstudios.ghost.command.mod.ModrinthCommand;
-import dev.spiritstudios.ghost.command.moderation.BanCommand;
-import dev.spiritstudios.ghost.command.tool.AvatarCommand;
-import dev.spiritstudios.ghost.command.tool.GrabEmojiCommand;
-import dev.spiritstudios.ghost.command.tool.PingCommand;
-import dev.spiritstudios.ghost.command.tool.TagCommand;
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
-import it.unimi.dsi.fastutil.objects.*;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.javacord.api.interaction.ApplicationCommand;
@@ -48,9 +44,12 @@ public final class CommandRegistry implements Registry<Command> {
                 .collect(Collectors.toSet());
 
         LOGGER.trace("Sending commands to discord");
-        Set<ApplicationCommand> registeredCommands = (Ghost.CONFIG.debug()
-                ? Ghost.getApi().bulkOverwriteServerApplicationCommands(Ghost.CONFIG.guildId(), builders)
+        Set<ApplicationCommand> registeredCommands = (GhostConfig.INSTANCE.debug()
+                ? Ghost.getApi().bulkOverwriteServerApplicationCommands(GhostConfig.INSTANCE.guildId(), builders)
                 : Ghost.getApi().bulkOverwriteGlobalApplicationCommands(builders)).join();
+
+        if (GhostConfig.INSTANCE.debug())
+            Ghost.getApi().bulkOverwriteGlobalApplicationCommands(Set.of()).join();
 
         for (ApplicationCommand command : registeredCommands) {
             byId.put(command.getId(), byName.get(command.getName()));

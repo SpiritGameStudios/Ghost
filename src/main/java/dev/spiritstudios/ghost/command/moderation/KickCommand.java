@@ -11,29 +11,27 @@ import org.javacord.api.entity.server.Server;
 import org.javacord.api.entity.user.User;
 import org.javacord.api.interaction.*;
 
-import java.util.concurrent.TimeUnit;
-
-public class BanCommand implements Command {
+public class KickCommand implements Command {
     @Override
     public String getName() {
-        return "ban";
+        return "kick";
     }
 
     @Override
     public SlashCommandBuilder createSlashCommand() {
-        return SlashCommand.with(getName(), "Ban a user from this server")
+        return SlashCommand.with(getName(), "Kick a user from this server")
                 .addOption(SlashCommandOption.createUserOption(
                         "user",
-                        "The user to ban",
+                        "The user to kick",
                         true
                 ))
                 .addOption(SlashCommandOption.createStringOption(
                         "reason",
-                        "The reason you are banning this user",
+                        "The reason you are kicking this user",
                         false
                 ))
                 .setEnabledInDms(false)
-                .setDefaultEnabledForPermissions(PermissionType.BAN_MEMBERS);
+                .setDefaultEnabledForPermissions(PermissionType.KICK_MEMBERS);
     }
 
     @Override
@@ -44,9 +42,9 @@ public class BanCommand implements Command {
 
         Server server = interaction.getServer().orElseThrow();
 
-        if (!server.canYouBanUser(user)) {
+        if (!server.canYouKickUser(user)) {
             interaction.createImmediateResponder()
-                    .addEmbed(EmbedUtil.error("Ghost does not have permission to ban that user"))
+                    .addEmbed(EmbedUtil.error("Ghost does not have permission to kick that user"))
                     .setFlags(MessageFlag.EPHEMERAL)
                     .respond();
 
@@ -59,7 +57,7 @@ public class BanCommand implements Command {
 
         interaction.respondLater().thenCompose(updater -> {
             EmbedBuilder dmEmbed = new EmbedBuilder()
-                    .setTitle("You have been banned from " + server.getName() + ".")
+                    .setTitle("You have been kicked from " + server.getName() + ".")
                     .addInlineField("Moderator", "<@!%d>".formatted(interaction.getUser().getId()))
                     .setColor(CommonColors.RED)
                     .setTimestampToNow();
@@ -75,10 +73,10 @@ public class BanCommand implements Command {
                         updater.addEmbed(EmbedUtil.error("Failed to notify user")).setFlags(MessageFlag.EPHEMERAL);
                         return null;
                     })
-                    .thenCompose(message -> server.banUser(user, 0, TimeUnit.SECONDS, reason))
+                    .thenCompose(message -> server.kickUser(user, reason))
                     .thenCompose(ignored -> updater.addEmbed(new EmbedBuilder()
                             .setTitle("Success")
-                            .setDescription("Banned <@!%d> from the server".formatted(user.getId()))
+                            .setDescription("Kicked <@!%d> from the server".formatted(user.getId()))
                             .setColor(CommonColors.GREEN)
                             .setTimestampToNow()).setFlags(MessageFlag.EPHEMERAL).update());
         });

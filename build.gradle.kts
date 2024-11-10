@@ -12,7 +12,10 @@ java {
 }
 
 repositories {
+    maven("https://maven.callmeecho.dev/snapshots")
+
     mavenCentral()
+    maven("https://maven.lavalink.dev/releases")
     maven("https://libraries.minecraft.net")
     maven("https://maven.lukebemish.dev/releases")
 }
@@ -28,7 +31,10 @@ dependencies {
     implementation(libs.datafixerupper)
     implementation(libs.fastutil)
     implementation(libs.webp.imageio)
-    implementation(libs.okhttp)
+    implementation(libs.maze)
+
+    implementation(libs.lavaplayer)
+    implementation(libs.lavaplayer.youtube)
 }
 
 application {

@@ -2,6 +2,8 @@ package dev.spiritstudios.ghost.command;
 
 import dev.spiritstudios.ghost.command.mod.ModrinthCommand;
 import dev.spiritstudios.ghost.command.moderation.BanCommand;
+import dev.spiritstudios.ghost.command.moderation.KickCommand;
+import dev.spiritstudios.ghost.command.music.MusicCommand;
 import dev.spiritstudios.ghost.command.tool.AvatarCommand;
 import dev.spiritstudios.ghost.command.tool.GrabEmojiCommand;
 import dev.spiritstudios.ghost.command.tool.PingCommand;
@@ -14,7 +16,11 @@ public final class Commands {
     public static final Command TAG = register(new TagCommand());
     public static final Command AVATAR = register(new AvatarCommand());
     public static final Command MODRINTH = register(new ModrinthCommand());
+
     public static final Command BAN = register(new BanCommand());
+    public static final Command KICK = register(new KickCommand());
+
+    public static final Command MUSIC = register(new MusicCommand());
 
     private static <T extends Command> T register(T entry) {
         Registries.COMMAND.register(entry.getName(), entry);

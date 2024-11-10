@@ -1,13 +1,12 @@
 package dev.spiritstudios.ghost;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import dev.spiritstudios.ghost.util.Constants;
+import dev.spiritstudios.ghost.util.Util;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -21,11 +20,6 @@ public record GhostConfig(
         String modrinthApiKey,
         boolean debug
 ) {
-    private static final Gson GSON = new GsonBuilder()
-            .setPrettyPrinting()
-            .setLenient()
-            .create();
-
     public static final Codec<GhostConfig> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.STRING.fieldOf("token").forGetter(GhostConfig::token),
             Codec.LONG.fieldOf("guild_id").forGetter(GhostConfig::guildId),
@@ -34,7 +28,9 @@ public record GhostConfig(
             Codec.BOOL.optionalFieldOf("debug", false).forGetter(GhostConfig::debug)
     ).apply(instance, GhostConfig::new));
 
-    public static GhostConfig load(Path path) {
+    public static final GhostConfig INSTANCE = Util.make(() -> {
+        Path path = Path.of("config.json");
+
         if (!Files.exists(path)) throw new IllegalArgumentException("Config file does not exist");
 
         List<String> lines;
@@ -45,13 +41,12 @@ public record GhostConfig(
             throw new RuntimeException(e);
         }
 
-        JsonElement element = GSON.fromJson(String.join("\n", lines), JsonElement.class);
-
+        JsonElement element = new Gson().fromJson(String.join("\n", lines), JsonElement.class);
         DataResult<GhostConfig> result = GhostConfig.CODEC.parse(JsonOps.INSTANCE, element);
 
         if (result.error().isPresent())
             throw new IllegalStateException(result.error().toString());
 
         return result.getOrThrow();
-    }
+    });
 }
