@@ -11,13 +11,11 @@ import org.apache.logging.log4j.Logger;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.activity.ActivityType;
-import org.javacord.api.entity.emoji.Emoji;
 import org.javacord.api.entity.intent.Intent;
 import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.util.logging.FallbackLoggerConfiguration;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -38,11 +36,7 @@ public final class Ghost {
         Commands.init();
         Registries.COMMAND.freeze();
 
-        try {
-            Registries.TAG.load();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        Registries.TAG.load();
         Registries.TAG.freeze();
 
         api = apiBuilder.login().join();
