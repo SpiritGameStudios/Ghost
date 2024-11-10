@@ -1,6 +1,6 @@
 # Ghost
 
-<img src="https://badger-api-staging.worldwidepixel.ca/compact?gradientStart=6C6FD2&gradientEnd=424594&lineOne=Built with&lineTwo=Javacord&colourOne=FFFFFF&colourTwo=F5A128&iconUrl=https://raw.githubusercontent.com/Javacord/Website/refs/heads/master/docs/.vuepress/public/favicon-96x96.png" alt="Built with Javacord" />
+<img src=".github/assets/javacord.svg" alt="Built with Javacord" />
 
 <img alt="Made by Spirit Studios" src="https://raw.githubusercontent.com/SpiritGameStudios/.github/main/assets/brand/badge/compact.svg">
 
