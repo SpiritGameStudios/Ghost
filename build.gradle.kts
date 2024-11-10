@@ -43,9 +43,11 @@ application {
 
 tasks.withType<Jar>() {
     manifest.attributes["Main-Class"] = "dev.spiritstudios.ghost.Ghost"
-    manifest.attributes["Class-Path"] = configurations
+    val dependencies = configurations
         .runtimeClasspath
         .get()
-        .joinToString(separator = " ") { file -> "libs/${file.name}" }
+        .map(::zipTree)
+    from(dependencies)
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
