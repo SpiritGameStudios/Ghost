@@ -9,6 +9,7 @@ import org.javacord.api.interaction.SlashCommandOptionChoice;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.net.URISyntaxException;
 import java.util.*;
 
 public final class TagRegistry implements Registry<String> {
@@ -39,10 +40,12 @@ public final class TagRegistry implements Registry<String> {
     public void load() {
         ClassLoader classLoader = getClass().getClassLoader();
 
-        File tagsFolder = new File(
-                Objects.requireNonNull(classLoader.getResource("tags"))
-                        .getFile()
-        );
+        File tagsFolder;
+        try {
+            tagsFolder = new File(Objects.requireNonNull(classLoader.getResource("tags")).toURI());
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
 
         if (!tagsFolder.exists()) throw new IllegalStateException("Tags folder does not exist");
         if (!tagsFolder.isDirectory()) throw new IllegalStateException("Tags folder is not a directory");
