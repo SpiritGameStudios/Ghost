@@ -1,11 +1,12 @@
 package dev.spiritstudios.ghost.command.tool;
 
-import dev.spiritstudios.ghost.TagManager;
 import dev.spiritstudios.ghost.command.Command;
-import dev.spiritstudios.ghost.command.util.EmbedUtil;
+import dev.spiritstudios.ghost.registry.Registries;
+import dev.spiritstudios.ghost.util.EmbedUtil;
 import org.javacord.api.DiscordApi;
-import org.javacord.api.entity.message.MessageFlag;
 import org.javacord.api.interaction.*;
+
+import java.util.Optional;
 
 public class TagCommand implements Command {
     @Override
@@ -28,23 +29,19 @@ public class TagCommand implements Command {
     public void execute(SlashCommandInteraction interaction, DiscordApi api) {
         String name = interaction.getOptionByName("name").orElseThrow().getStringValue().orElseThrow();
 
-        String tag = TagManager.get(name);
-        if (tag == null) {
-            interaction.createImmediateResponder()
-                    .addEmbed(EmbedUtil.error("Tag not found"))
-                    .setFlags(MessageFlag.EPHEMERAL)
-                    .respond();
-
+        Optional<String> tag = Registries.TAG.get(name);
+        if (tag.isEmpty()) {
+            EmbedUtil.error("Tag not found", interaction);
             return;
         }
 
         interaction.createImmediateResponder()
-                .setContent(tag)
+                .setContent(tag.get())
                 .respond();
     }
 
     @Override
     public void autoComplete(AutocompleteInteraction interaction, DiscordApi api) {
-        interaction.respondWithChoices(TagManager.choices());
+        interaction.respondWithChoices(Registries.TAG.choices());
     }
 }

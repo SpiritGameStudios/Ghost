@@ -3,12 +3,13 @@ package dev.spiritstudios.ghost.command.music;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
+import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import dev.spiritstudios.ghost.command.CommandWithSubcommands;
-import dev.spiritstudios.ghost.command.util.EmbedUtil;
+import dev.spiritstudios.ghost.util.EmbedUtil;
 import dev.spiritstudios.ghost.data.CommonColors;
 import dev.spiritstudios.ghost.music.MusicManager;
-import dev.spiritstudios.ghost.util.Constants;
+import dev.spiritstudios.ghost.util.SharedConstants;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.ServerVoiceChannel;
 import org.javacord.api.entity.message.MessageFlag;
@@ -65,22 +66,17 @@ public class MusicCommand implements CommandWithSubcommands {
         Optional<ServerVoiceChannel> channel = interaction.getUser().getConnectedVoiceChannel(interaction.getServer().orElseThrow());
 
         if (channel.isEmpty()) {
-            interaction.createImmediateResponder()
-                    .addEmbed(EmbedUtil.error("You are not currently in a voice channel"))
-                    .setFlags(MessageFlag.EPHEMERAL)
-                    .respond();
-
+            notInVcError(interaction);
             return;
         }
 
-        MusicManager.getExisting(channel.get()).ifPresentOrElse(
+        MusicManager.get(channel.get()).ifPresentOrElse(
                 scheduler -> {
                     scheduler.pop();
                     interaction.createImmediateResponder()
                             .addEmbed(EmbedUtil.titleOnly("Song Skipped", CommonColors.GREEN)).respond();
                 },
-                () -> interaction.createImmediateResponder()
-                        .addEmbed(EmbedUtil.error("No music is currently playing")).setFlags(MessageFlag.EPHEMERAL).respond()
+                () -> noMusicError(interaction)
         );
     }
 
@@ -88,22 +84,17 @@ public class MusicCommand implements CommandWithSubcommands {
         Optional<ServerVoiceChannel> channel = interaction.getUser().getConnectedVoiceChannel(interaction.getServer().orElseThrow());
 
         if (channel.isEmpty()) {
-            interaction.createImmediateResponder()
-                    .addEmbed(EmbedUtil.error("You are not currently in a voice channel"))
-                    .setFlags(MessageFlag.EPHEMERAL)
-                    .respond();
-
+            notInVcError(interaction);
             return;
         }
 
-        MusicManager.getExisting(channel.get()).ifPresentOrElse(
+        MusicManager.get(channel.get()).ifPresentOrElse(
                 scheduler -> {
                     scheduler.destroy();
                     interaction.createImmediateResponder()
                             .addEmbed(EmbedUtil.titleOnly("Music Stopped", CommonColors.GREEN)).respond();
                 },
-                () -> interaction.createImmediateResponder()
-                        .addEmbed(EmbedUtil.error("No music is currently playing")).setFlags(MessageFlag.EPHEMERAL).respond()
+                () -> noMusicError(interaction)
         );
     }
 
@@ -119,7 +110,7 @@ public class MusicCommand implements CommandWithSubcommands {
             return;
         }
 
-        MusicManager.getExisting(channel.get()).ifPresentOrElse(
+        MusicManager.get(channel.get()).ifPresentOrElse(
                 scheduler -> {
                     scheduler.setPaused(value);
                     interaction.createImmediateResponder()
@@ -139,18 +130,17 @@ public class MusicCommand implements CommandWithSubcommands {
             Optional<ServerVoiceChannel> channel = interaction.getUser().getConnectedVoiceChannel(interaction.getServer().orElseThrow());
 
             if (channel.isEmpty()) {
-                updater
-                        .addEmbed(EmbedUtil.error("You are not currently in a voice channel"))
-                        .setFlags(MessageFlag.EPHEMERAL)
-                        .update().thenAccept(ignored -> {
-                        });
-
+                notInVcError(interaction);
                 return;
             }
 
             MusicManager scheduler = MusicManager.getOrCreate(channel.get());
 
-            Constants.PLAYER_MANAGER.loadItem(identifier, new AudioLoadResultHandler() {
+            AudioReference reference = identifier.startsWith("https://") || identifier.startsWith("bcsearch:") ?
+                    new AudioReference(identifier, null) :
+                    new AudioReference("scsearch:" + identifier, null);
+
+            SharedConstants.PLAYER_MANAGER.loadItem(reference, new AudioLoadResultHandler() {
                 @Override
                 public void trackLoaded(AudioTrack track) {
                     scheduler.push(track);
@@ -165,21 +155,23 @@ public class MusicCommand implements CommandWithSubcommands {
 
                 @Override
                 public void noMatches() {
-                    updater
-                            .addEmbed(EmbedUtil.error("No match found"))
-                            .setFlags(MessageFlag.EPHEMERAL)
-                            .update();
+                    EmbedUtil.error("No match found", updater);
                 }
 
                 @Override
                 public void loadFailed(FriendlyException exception) {
-                    updater
-                            .addEmbed(EmbedUtil.error(exception.getMessage()))
-                            .setFlags(MessageFlag.EPHEMERAL)
-                            .update();
+                    EmbedUtil.error(exception.getMessage(), updater);
                 }
             });
         });
+    }
+
+    private static void notInVcError(SlashCommandInteraction interaction) {
+        EmbedUtil.error("You are not currently in a voice channel", interaction);
+    }
+
+    private static void noMusicError(SlashCommandInteraction interaction) {
+        EmbedUtil.error("No music is currently playing", interaction);
     }
 }
 

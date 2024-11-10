@@ -1,6 +1,9 @@
 package dev.spiritstudios.ghost;
 
+import dev.spiritstudios.ghost.command.Commands;
 import dev.spiritstudios.ghost.data.CommonColors;
+import dev.spiritstudios.ghost.data.CustomEmoji;
+import dev.spiritstudios.ghost.listener.Listeners;
 import dev.spiritstudios.ghost.registry.Registries;
 import dev.spiritstudios.ghost.util.StringUtil;
 import org.apache.logging.log4j.LogManager;
@@ -8,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.activity.ActivityType;
+import org.javacord.api.entity.emoji.Emoji;
 import org.javacord.api.entity.intent.Intent;
 import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
@@ -21,11 +25,27 @@ public final class Ghost {
     private static DiscordApi api;
 
     public static void main(String[] args) {
-        api = new DiscordApiBuilder()
+        DiscordApiBuilder apiBuilder = new DiscordApiBuilder();
+        apiBuilder
                 .setToken(GhostConfig.INSTANCE.token())
-                .addIntents(Intent.GUILDS, Intent.GUILD_VOICE_STATES)
-                .login()
-                .join();
+                .addIntents(Intent.GUILDS);
+
+        Listeners.init();
+        Registries.LISTENER.freeze();
+        Registries.LISTENER.forEach(apiBuilder::addListener);
+
+        Commands.init();
+        Registries.COMMAND.freeze();
+
+        Registries.TAG.load();
+        Registries.TAG.freeze();
+
+        api = apiBuilder.login().join();
+
+        Registries.COMMAND.sendCommands(api);
+
+        CustomEmoji.init();
+        Registries.CUSTOM_EMOJI.freeze();
 
         if (GhostConfig.INSTANCE.debug()) {
             FallbackLoggerConfiguration.setDebug(true);
@@ -33,10 +53,6 @@ public final class Ghost {
             LOGGER.debug("Debug mode enabled");
         }
 
-        Registries.init();
-        tryRun(TagManager::init, "An error occurred while initializing tags");
-
-        Registries.freezeAll();
 
         LOGGER.info("Logged in as {}", api.getYourself().getDiscriminatedName());
     }
@@ -50,7 +66,7 @@ public final class Ghost {
     }
 
     public static void logError(String message, Throwable t) {
-//        if (!GhostConfig.INSTANCE.debug() || GhostConfig.INSTANCE.channelId() <= 0) return;
+        if (!GhostConfig.INSTANCE.debug() || GhostConfig.INSTANCE.channelId() <= 0) return;
 
         StringWriter stackTrace = new StringWriter();
         PrintWriter writer = new PrintWriter(stackTrace);
@@ -60,7 +76,8 @@ public final class Ghost {
                 .ifPresent(channel -> {
                     EmbedBuilder embed = new EmbedBuilder()
                             .setTitle(message)
-                            .setDescription(StringUtil.truncate(("```lisp\n%s```").formatted(stackTrace.toString()), 4096))
+                            .setDescription("```lisp\n%s```"
+                                    .formatted(StringUtil.truncate(stackTrace.toString(), 2048)))
                             .addField("Full message", t.getMessage(), false)
                             .setColor(CommonColors.RED);
 

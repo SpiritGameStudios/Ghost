@@ -1,7 +1,7 @@
 package dev.spiritstudios.ghost.command.moderation;
 
 import dev.spiritstudios.ghost.command.Command;
-import dev.spiritstudios.ghost.command.util.EmbedUtil;
+import dev.spiritstudios.ghost.util.EmbedUtil;
 import dev.spiritstudios.ghost.data.CommonColors;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.message.MessageFlag;
@@ -45,11 +45,7 @@ public class BanCommand implements Command {
         Server server = interaction.getServer().orElseThrow();
 
         if (!server.canYouBanUser(user)) {
-            interaction.createImmediateResponder()
-                    .addEmbed(EmbedUtil.error("Ghost does not have permission to ban that user"))
-                    .setFlags(MessageFlag.EPHEMERAL)
-                    .respond();
-
+            EmbedUtil.error("Ghost does not have permission to ban that user", interaction);
             return;
         }
 
@@ -72,7 +68,9 @@ public class BanCommand implements Command {
 
             return user.sendMessage(dmEmbed)
                     .exceptionally(throwable -> {
-                        updater.addEmbed(EmbedUtil.error("Failed to notify user")).setFlags(MessageFlag.EPHEMERAL);
+                        updater.addEmbed(EmbedUtil.error("Failed to notify user"))
+                                .setFlags(MessageFlag.EPHEMERAL);
+
                         return null;
                     })
                     .thenCompose(message -> server.banUser(user, 0, TimeUnit.SECONDS, reason))

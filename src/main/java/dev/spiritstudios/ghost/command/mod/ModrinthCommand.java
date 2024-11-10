@@ -3,10 +3,10 @@ package dev.spiritstudios.ghost.command.mod;
 import dev.callmeecho.maze.model.Project;
 import dev.spiritstudios.ghost.Ghost;
 import dev.spiritstudios.ghost.command.CommandWithSubcommands;
-import dev.spiritstudios.ghost.command.util.EmbedUtil;
+import dev.spiritstudios.ghost.util.EmbedUtil;
 import dev.spiritstudios.ghost.data.CommonColors;
 import dev.spiritstudios.ghost.data.CustomEmoji;
-import dev.spiritstudios.ghost.util.Constants;
+import dev.spiritstudios.ghost.util.SharedConstants;
 import dev.spiritstudios.ghost.util.HttpHelper;
 import dev.spiritstudios.ghost.util.ImageHelper;
 import dev.spiritstudios.ghost.util.StringUtil;
@@ -57,7 +57,7 @@ public class ModrinthCommand implements CommandWithSubcommands {
                     .flatMap(SlashCommandInteractionOption::getStringValue)
                     .orElseThrow();
 
-            interaction.respondLater().thenCompose(updater -> Constants.MODRINTH_API.project().get(slug).thenApply(project -> {
+            interaction.respondLater().thenCompose(updater -> SharedConstants.MODRINTH_API.project().get(slug).thenApply(project -> {
                 if (project == null) return updater.addEmbed(EmbedUtil.error("Mod not found.")).update();
 
                 List<String> categories = StringUtil.capitalize(project.categories());
@@ -78,6 +78,19 @@ public class ModrinthCommand implements CommandWithSubcommands {
                         case "Forge" -> CustomEmoji.LEXFORGE.getMentionTag();
                         case "Neoforge" -> CustomEmoji.NEOFORGE.getMentionTag();
                         case "Quilt" -> CustomEmoji.QUILT.getMentionTag();
+                        case "Paper" -> CustomEmoji.PAPER.getMentionTag();
+                        case "Spigot" -> CustomEmoji.SPIGOT.getMentionTag();
+                        case "Velocity" -> CustomEmoji.VELOCITY.getMentionTag();
+                        case "Bukkit" -> CustomEmoji.BUKKIT.getMentionTag();
+                        case "Minecraft" -> CustomEmoji.MINECRAFT.getMentionTag();
+                        case "Purpur" -> CustomEmoji.PURPUR.getMentionTag();
+                        case "Waterfall" -> CustomEmoji.WATERFALL.getMentionTag();
+                        case "Sponge" -> CustomEmoji.SPONGE.getMentionTag();
+                        case "Rift" -> CustomEmoji.RIFT.getMentionTag();
+                        case "Modloader" -> CustomEmoji.MODLOADER.getMentionTag();
+                        case "Liteloader" -> CustomEmoji.LITELOADER.getMentionTag();
+                        case "Folia" -> CustomEmoji.FOLIA.getMentionTag();
+                        case "Bungeecord" -> CustomEmoji.BUNGEECORD.getMentionTag();
                         default -> CustomEmoji.UNKNOWN.getMentionTag();
                     } + " " + loader);
 

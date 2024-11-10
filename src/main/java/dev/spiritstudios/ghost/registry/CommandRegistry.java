@@ -9,6 +9,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.javacord.api.DiscordApi;
 import org.javacord.api.interaction.ApplicationCommand;
 import org.javacord.api.interaction.SlashCommandBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -27,9 +28,11 @@ public final class CommandRegistry implements Registry<Command> {
     private final Map<String, Integer> byName = new Object2IntOpenHashMap<>();
     private final Map<Long, Integer> byId = new Long2IntOpenHashMap();
 
+    private boolean frozen;
+
     @Override
     public Command register(String id, Command entry) {
-        if (!byId.isEmpty()) throw new IllegalStateException("Attempted to register object after registry was frozen");
+        if (frozen) throw new IllegalStateException("Attempted to register object after registry was frozen");
 
         values.add(entry);
         byName.put(id, values.size() - 1);
@@ -39,17 +42,22 @@ public final class CommandRegistry implements Registry<Command> {
 
     @Override
     public void freeze() {
+        if (frozen) throw new IllegalStateException("Registry already frozen");
+        frozen = true;
+    }
+
+    public void sendCommands(DiscordApi api) {
         Set<SlashCommandBuilder> builders = byName.values().stream()
                 .map(index -> values.get(index).createSlashCommand())
                 .collect(Collectors.toSet());
 
         LOGGER.trace("Sending commands to discord");
         Set<ApplicationCommand> registeredCommands = (GhostConfig.INSTANCE.debug()
-                ? Ghost.getApi().bulkOverwriteServerApplicationCommands(GhostConfig.INSTANCE.guildId(), builders)
-                : Ghost.getApi().bulkOverwriteGlobalApplicationCommands(builders)).join();
+                ? api.bulkOverwriteServerApplicationCommands(GhostConfig.INSTANCE.guildId(), builders)
+                : api.bulkOverwriteGlobalApplicationCommands(builders)).join();
 
         if (GhostConfig.INSTANCE.debug())
-            Ghost.getApi().bulkOverwriteGlobalApplicationCommands(Set.of()).join();
+            api.bulkOverwriteGlobalApplicationCommands(Set.of()).join();
 
         for (ApplicationCommand command : registeredCommands) {
             byId.put(command.getId(), byName.get(command.getName()));

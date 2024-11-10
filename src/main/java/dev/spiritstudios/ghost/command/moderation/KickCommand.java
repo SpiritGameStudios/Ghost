@@ -1,7 +1,7 @@
 package dev.spiritstudios.ghost.command.moderation;
 
 import dev.spiritstudios.ghost.command.Command;
-import dev.spiritstudios.ghost.command.util.EmbedUtil;
+import dev.spiritstudios.ghost.util.EmbedUtil;
 import dev.spiritstudios.ghost.data.CommonColors;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.message.MessageFlag;

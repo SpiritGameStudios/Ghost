@@ -1,19 +1,15 @@
 package dev.spiritstudios.ghost.command.tool;
 
 import dev.spiritstudios.ghost.command.Command;
-import dev.spiritstudios.ghost.command.util.EmbedUtil;
+import dev.spiritstudios.ghost.util.EmbedUtil;
 import dev.spiritstudios.ghost.data.CommonColors;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.message.MessageFlag;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.permission.PermissionType;
 import org.javacord.api.entity.server.Server;
-import org.javacord.api.interaction.SlashCommand;
-import org.javacord.api.interaction.SlashCommandBuilder;
-import org.javacord.api.interaction.SlashCommandInteraction;
-import org.javacord.api.interaction.SlashCommandOption;
+import org.javacord.api.interaction.*;
 
-import java.awt.*;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -45,10 +41,7 @@ public class GrabEmojiCommand implements Command {
         Server server = interaction.getServer().orElseThrow();
 
         if (!server.canYouManageEmojis()) {
-            interaction.createImmediateResponder()
-                    .addEmbed(EmbedUtil.error("Ghost does not have permission to manage emojis"))
-                    .setFlags(MessageFlag.EPHEMERAL)
-                    .respond();
+            EmbedUtil.error("Ghost does not have permission to manage emojis", interaction);
             return;
         }
 
@@ -56,12 +49,11 @@ public class GrabEmojiCommand implements Command {
 
         URL url;
         try {
-            url = URI.create(interaction.getOptionByName("url").orElseThrow().getStringValue().orElseThrow()).toURL();
+            url = URI.create(interaction.getOptionByName("url")
+                    .flatMap(SlashCommandInteractionOption::getStringValue)
+                    .orElseThrow()).toURL();
         } catch (MalformedURLException | IllegalArgumentException e) {
-            interaction.createImmediateResponder()
-                    .addEmbed(EmbedUtil.error("Invalid URL"))
-                    .setFlags(MessageFlag.EPHEMERAL)
-                    .respond();
+            EmbedUtil.error("Invalid URL", interaction);
             return;
         }
 

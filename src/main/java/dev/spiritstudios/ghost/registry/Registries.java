@@ -15,31 +15,13 @@ public final class Registries {
 
     public static final CommandRegistry COMMAND = new CommandRegistry();
 
-    public static final Registry<GloballyAttachableListener> LISTENER = new SimpleRegistry<>() {
-        @Override
-        public void freeze() {
-            super.freeze();
-            for (GloballyAttachableListener listener : this) Ghost.getApi().addListener(listener);
-        }
-    };
+    public static final Registry<GloballyAttachableListener> LISTENER = new SimpleRegistry<>();
 
     public static final Registry<KnownCustomEmoji> CUSTOM_EMOJI = new SimpleRegistry<>();
 
+    public static final TagRegistry TAG = new TagRegistry();
+
     private Registries() {
         Util.utilError();
-    }
-
-    public static void init() {
-        CustomEmoji.init();
-        Commands.init();
-        Listeners.init();
-    }
-
-    public static void freezeAll() {
-        LOGGER.trace("Freezing all registries");
-
-        CUSTOM_EMOJI.freeze();
-        COMMAND.freeze();
-        LISTENER.freeze();
     }
 }

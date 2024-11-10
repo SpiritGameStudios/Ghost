@@ -6,7 +6,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import dev.spiritstudios.ghost.Ghost;
-import dev.spiritstudios.ghost.util.Constants;
+import dev.spiritstudios.ghost.util.SharedConstants;
 import dev.spiritstudios.ghost.util.HttpHelper;
 import dev.spiritstudios.ghost.util.ImageHelper;
 import dev.spiritstudios.ghost.util.StringUtil;
@@ -32,19 +32,16 @@ public class MusicManager extends AudioEventAdapter {
     private AudioConnection connection;
 
     public static MusicManager getOrCreate(ServerVoiceChannel channel) {
-        MusicManager existing = MANAGERS.get(channel.getId());
-        if (existing != null) return existing;
-
-        return new MusicManager(channel);
+        return MANAGERS.computeIfAbsent(channel.getId(), key -> new MusicManager(channel));
     }
 
-    public static Optional<MusicManager> getExisting(ServerVoiceChannel channel) {
+    public static Optional<MusicManager> get(ServerVoiceChannel channel) {
         return Optional.ofNullable(MANAGERS.get(channel.getId()));
     }
 
     private MusicManager(ServerVoiceChannel channel) {
         this.channel = channel;
-        this.player = Constants.PLAYER_MANAGER.createPlayer();
+        this.player = SharedConstants.PLAYER_MANAGER.createPlayer();
         player.addListener(this);
 
         AudioSource source = new LavaplayerAudioSource(Ghost.getApi(), player);

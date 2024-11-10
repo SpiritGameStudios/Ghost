@@ -8,7 +8,7 @@ import dev.callmeecho.maze.Labrinth;
 import dev.callmeecho.maze.RateLimitedClient;
 import dev.spiritstudios.ghost.GhostConfig;
 
-public final class Constants {
+public final class SharedConstants {
     public static final Labrinth MODRINTH_API = new Labrinth(RateLimitedClient.builder()
             .apiKey(GhostConfig.INSTANCE.modrinthApiKey())
             .baseUrl("https://api.modrinth.com/v2")
@@ -23,7 +23,7 @@ public final class Constants {
             }
     );
 
-    private Constants() {
+    private SharedConstants() {
         Util.utilError();
     }
 }
