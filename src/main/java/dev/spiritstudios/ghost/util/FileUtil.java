@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -22,11 +23,8 @@ public final class FileUtil {
     }
 
     public static List<Path> getFiles(String basePath) {
-        Path resPath = Paths.get(Resources.getResource(basePath).getPath());
-        try (Stream<Path> stream = Files.walk(resPath)) {
-            return stream.filter(Files::isRegularFile)
-                    .map(resPath::relativize)
-                    .collect(Collectors.toList());
+        try (InputStream stream = getContextClassLoader().getResourceAsStream(basePath)) {
+            return Stream.of(new String(stream.readAllBytes()).split("\n")).map(Path::of).toList();
         } catch (IOException e) {
             throw new IllegalArgumentException(e);
         }
