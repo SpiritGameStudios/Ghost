@@ -40,3 +40,12 @@ dependencies {
 application {
     mainClass.set("dev.spiritstudios.ghost.Ghost")
 }
+
+tasks.withType<Jar>() {
+    manifest.attributes["Main-Class"] = "dev.spiritstudios.ghost.Ghost"
+    manifest.attributes["Class-Path"] = configurations
+        .runtimeClasspath
+        .get()
+        .joinToString(separator = " ") { file -> "libs/${file.name}" }
+}
+
