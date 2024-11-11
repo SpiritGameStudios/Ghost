@@ -9,39 +9,44 @@ import org.javacord.api.interaction.*;
 import java.util.Optional;
 
 public class TagCommand implements Command {
-    @Override
-    public String getName() {
-        return "tag";
-    }
+	@Override
+	public String getName() {
+		return "tag";
+	}
 
-    @Override
-    public SlashCommandBuilder createSlashCommand() {
-        return SlashCommand.with(getName(), "Send a tag message")
-                .addOption(SlashCommandOption.createStringOption(
-                        "name",
-                        "The name of the tag",
-                        true,
-                        true
-                ));
-    }
+	@Override
+	public SlashCommandBuilder createSlashCommand() {
+		return SlashCommand.with(getName(), "Send a tag message")
+			.addOption(SlashCommandOption.createStringOption(
+				"name",
+				"The name of the tag",
+				true,
+				true
+			));
+	}
 
-    @Override
-    public void execute(SlashCommandInteraction interaction, DiscordApi api) {
-        String name = interaction.getOptionByName("name").orElseThrow().getStringValue().orElseThrow();
+	@Override
+	public void execute(SlashCommandInteraction interaction, DiscordApi api) {
+		String name = interaction.getOptionByName("name").orElseThrow().getStringValue().orElseThrow();
 
-        Optional<String> tag = Registries.TAG.get(name);
-        if (tag.isEmpty()) {
-            EmbedUtil.error("Tag not found", interaction);
-            return;
-        }
+		Optional<String> tag = Registries.TAG.get(name);
+		if (tag.isEmpty()) {
+			EmbedUtil.error("Tag not found", interaction);
+			return;
+		}
 
-        interaction.createImmediateResponder()
-                .setContent(tag.get())
-                .respond();
-    }
+		interaction.createImmediateResponder()
+			.setContent(tag.get())
+			.respond();
+	}
 
-    @Override
-    public void autoComplete(AutocompleteInteraction interaction, DiscordApi api) {
-        interaction.respondWithChoices(Registries.TAG.choices());
-    }
+	@Override
+	public void autoComplete(AutocompleteInteraction interaction, DiscordApi api) {
+		// Since name is the only option here, we can be sure it's what we are trying to autocomplete
+		SlashCommandInteractionOption option = interaction.getFocusedOption();
+		String partial = option.getStringValue().orElseThrow();
+
+		interaction.respondWithChoices(Registries.TAG.choices().parallelStream()
+			.filter(choice -> choice.getStringValue().orElseThrow().contains(partial)).toList());
+	}
 }

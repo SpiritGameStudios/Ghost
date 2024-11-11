@@ -19,110 +19,110 @@ import java.util.List;
 import java.util.Map;
 
 public class ModrinthCommand implements CommandWithSubcommands {
-    @Override
-    public Map<String, Subcommand> getSubcommands() {
-        return Map.of(
-                "projects info", Projects::info
-        );
-    }
+	@Override
+	public Map<String, Subcommand> getSubcommands() {
+		return Map.of(
+			"projects info", Projects::info
+		);
+	}
 
-    @Override
-    public String getName() {
-        return "modrinth";
-    }
+	@Override
+	public String getName() {
+		return "modrinth";
+	}
 
-    @Override
-    public SlashCommandBuilder createSlashCommand() {
-        return SlashCommand.with(getName(), "Interact with Modrinth", List.of(
-                SlashCommandOption.createSubcommandGroup("projects", "Interact with projects", List.of(
-                        SlashCommandOption.createSubcommand(
-                                "info",
-                                "Get information about a project",
-                                List.of(SlashCommandOption.createStringOption("slug", "The slug of the mod", true))
-                        )
-                ))
-        ));
-    }
+	@Override
+	public SlashCommandBuilder createSlashCommand() {
+		return SlashCommand.with(getName(), "Interact with Modrinth", List.of(
+			SlashCommandOption.createSubcommandGroup("projects", "Interact with projects", List.of(
+				SlashCommandOption.createSubcommand(
+					"info",
+					"Get information about a project",
+					List.of(SlashCommandOption.createStringOption("slug", "The slug of the mod", true))
+				)
+			))
+		));
+	}
 
-    private static class Projects {
-        private static final Map<Project.Type, String> PROJECT_TYPE_NAMES = Map.of(
-                Project.Type.MOD, "Mod",
-                Project.Type.MODPACK, "Mod Pack",
-                Project.Type.RESOURCE_PACK, "Resource Pack",
-                Project.Type.SHADER, "Shader Pack"
-        );
+	private static class Projects {
+		private static final Map<Project.Type, String> PROJECT_TYPE_NAMES = Map.of(
+			Project.Type.MOD, "Mod",
+			Project.Type.MODPACK, "Mod Pack",
+			Project.Type.RESOURCE_PACK, "Resource Pack",
+			Project.Type.SHADER, "Shader Pack"
+		);
 
-        public static void info(SlashCommandInteraction interaction, SlashCommandInteractionOptionsProvider options, DiscordApi api) {
-            String slug = options.getOptionByName("slug")
-                    .flatMap(SlashCommandInteractionOption::getStringValue)
-                    .orElseThrow();
+		public static void info(SlashCommandInteraction interaction, SlashCommandInteractionOptionsProvider options, DiscordApi api) {
+			String slug = options.getOptionByName("slug")
+				.flatMap(SlashCommandInteractionOption::getStringValue)
+				.orElseThrow();
 
-            interaction.respondLater().thenCompose(updater -> SharedConstants.MODRINTH_API.project().get(slug).thenApply(project -> {
-                if (project == null) return updater.addEmbed(EmbedUtil.error("Mod not found.")).update();
+			interaction.respondLater().thenCompose(updater -> SharedConstants.MODRINTH_API.project().get(slug).thenApply(project -> {
+				if (project == null) return updater.addEmbed(EmbedUtil.error("Mod not found.")).update();
 
-                List<String> categories = StringUtil.capitalize(project.categories());
+				List<String> categories = StringUtil.capitalize(project.categories());
 
-                EmbedBuilder embed = new EmbedBuilder()
-                        .setTitle(project.title())
-                        .setUrl("https://modrinth.com/mod/%s".formatted(project.slug()))
-                        .setDescription(project.description())
-                        .addField("Categories", String.join("\n", categories), true)
-                        .setTimestampToNow()
-                        .setFooter(PROJECT_TYPE_NAMES.get(project.projectType()) + " on Modrinth", CustomEmoji.MODRINTH.getImage());
-
-
-                if (project.loaders() != null) {
-                    List<String> loaders = StringUtil.capitalize(project.loaders());
-                    loaders.replaceAll(loader -> switch (loader) {
-                        case "Fabric" -> CustomEmoji.FABRIC.getMentionTag();
-                        case "Forge" -> CustomEmoji.LEXFORGE.getMentionTag();
-                        case "Neoforge" -> CustomEmoji.NEOFORGE.getMentionTag();
-                        case "Quilt" -> CustomEmoji.QUILT.getMentionTag();
-                        case "Paper" -> CustomEmoji.PAPER.getMentionTag();
-                        case "Spigot" -> CustomEmoji.SPIGOT.getMentionTag();
-                        case "Velocity" -> CustomEmoji.VELOCITY.getMentionTag();
-                        case "Bukkit" -> CustomEmoji.BUKKIT.getMentionTag();
-                        case "Minecraft" -> CustomEmoji.MINECRAFT.getMentionTag();
-                        case "Purpur" -> CustomEmoji.PURPUR.getMentionTag();
-                        case "Waterfall" -> CustomEmoji.WATERFALL.getMentionTag();
-                        case "Sponge" -> CustomEmoji.SPONGE.getMentionTag();
-                        case "Rift" -> CustomEmoji.RIFT.getMentionTag();
-                        case "Modloader" -> CustomEmoji.MODLOADER.getMentionTag();
-                        case "Liteloader" -> CustomEmoji.LITELOADER.getMentionTag();
-                        case "Folia" -> CustomEmoji.FOLIA.getMentionTag();
-                        case "Bungeecord" -> CustomEmoji.BUNGEECORD.getMentionTag();
-                        default -> CustomEmoji.UNKNOWN.getMentionTag();
-                    } + " " + loader);
-
-                    embed.addInlineField("Loaders", String.join("\n", loaders));
-                }
-
-                if (project.gameVersions() != null) {
-                    embed.addInlineField("Versions", StringUtil.truncate(String.join("\n", project.gameVersions()), 256));
-                }
+				EmbedBuilder embed = new EmbedBuilder()
+					.setTitle(project.title())
+					.setUrl("https://modrinth.com/mod/%s".formatted(project.slug()))
+					.setDescription(project.description())
+					.addField("Categories", String.join("\n", categories), true)
+					.setTimestampToNow()
+					.setFooter(PROJECT_TYPE_NAMES.get(project.projectType()) + " on Modrinth", CustomEmoji.MODRINTH.getImage());
 
 
-                if (project.iconUrl() != null) {
-                    embed.setThumbnail(project.iconUrl());
-                    return HttpHelper.getImage(project.iconUrl())
-                            .thenCompose(icon -> {
-                                embed.setColor(new Color(ImageHelper.getCommonColor(icon)));
-                                return updater.addEmbed(embed).update();
-                            }).whenComplete((ignored, throwable) -> {
-                                if (throwable == null) return;
+				if (project.loaders() != null) {
+					List<String> loaders = StringUtil.capitalize(project.loaders());
+					loaders.replaceAll(loader -> switch (loader) {
+						case "Fabric" -> CustomEmoji.FABRIC.getMentionTag();
+						case "Forge" -> CustomEmoji.LEXFORGE.getMentionTag();
+						case "Neoforge" -> CustomEmoji.NEOFORGE.getMentionTag();
+						case "Quilt" -> CustomEmoji.QUILT.getMentionTag();
+						case "Paper" -> CustomEmoji.PAPER.getMentionTag();
+						case "Spigot" -> CustomEmoji.SPIGOT.getMentionTag();
+						case "Velocity" -> CustomEmoji.VELOCITY.getMentionTag();
+						case "Bukkit" -> CustomEmoji.BUKKIT.getMentionTag();
+						case "Minecraft" -> CustomEmoji.MINECRAFT.getMentionTag();
+						case "Purpur" -> CustomEmoji.PURPUR.getMentionTag();
+						case "Waterfall" -> CustomEmoji.WATERFALL.getMentionTag();
+						case "Sponge" -> CustomEmoji.SPONGE.getMentionTag();
+						case "Rift" -> CustomEmoji.RIFT.getMentionTag();
+						case "Modloader" -> CustomEmoji.MODLOADER.getMentionTag();
+						case "Liteloader" -> CustomEmoji.LITELOADER.getMentionTag();
+						case "Folia" -> CustomEmoji.FOLIA.getMentionTag();
+						case "Bungeecord" -> CustomEmoji.BUNGEECORD.getMentionTag();
+						default -> CustomEmoji.UNKNOWN.getMentionTag();
+					} + " " + loader);
 
-                                Ghost.logError("", throwable);
-                            });
-                }
+					embed.addInlineField("Loaders", String.join("\n", loaders));
+				}
+
+				if (project.gameVersions() != null) {
+					embed.addInlineField("Versions", StringUtil.truncate(String.join("\n", project.gameVersions()), 256));
+				}
 
 
-                embed.setColor(CommonColors.BLURPLE);
-                return updater.addEmbed(embed).update();
-            })).whenComplete((ignored, throwable) -> {
-                if (throwable == null) return;
+				if (project.iconUrl() != null) {
+					embed.setThumbnail(project.iconUrl());
+					return HttpHelper.getImage(project.iconUrl())
+						.thenCompose(icon -> {
+							embed.setColor(new Color(ImageHelper.getCommonColor(icon)));
+							return updater.addEmbed(embed).update();
+						}).whenComplete((ignored, throwable) -> {
+							if (throwable == null) return;
 
-                Ghost.logError("", throwable);
-            });
-        }
-    }
+							Ghost.logError("", throwable);
+						});
+				}
+
+
+				embed.setColor(CommonColors.BLURPLE);
+				return updater.addEmbed(embed).update();
+			})).whenComplete((ignored, throwable) -> {
+				if (throwable == null) return;
+
+				Ghost.logError("", throwable);
+			});
+		}
+	}
 }

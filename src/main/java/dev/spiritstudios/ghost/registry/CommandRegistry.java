@@ -21,62 +21,62 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class CommandRegistry implements Registry<Command> {
-    private static final Logger LOGGER = LogManager.getLogger(CommandRegistry.class);
+	private static final Logger LOGGER = LogManager.getLogger(CommandRegistry.class);
 
-    private final ObjectList<Command> values = new ObjectArrayList<>();
+	private final ObjectList<Command> values = new ObjectArrayList<>();
 
-    private final Map<String, Integer> byName = new Object2IntOpenHashMap<>();
-    private final Map<Long, Integer> byId = new Long2IntOpenHashMap();
+	private final Map<String, Integer> byName = new Object2IntOpenHashMap<>();
+	private final Map<Long, Integer> byId = new Long2IntOpenHashMap();
 
-    private boolean frozen;
+	private boolean frozen;
 
-    @Override
-    public Command register(String id, Command entry) {
-        if (frozen) throw new IllegalStateException("Attempted to register object after registry was frozen");
+	@Override
+	public Command register(String id, Command entry) {
+		if (frozen) throw new IllegalStateException("Attempted to register object after registry was frozen");
 
-        values.add(entry);
-        byName.put(id, values.size() - 1);
+		values.add(entry);
+		byName.put(id, values.size() - 1);
 
-        return entry;
-    }
+		return entry;
+	}
 
-    @Override
-    public void freeze() {
-        if (frozen) throw new IllegalStateException("Registry already frozen");
-        frozen = true;
-    }
+	@Override
+	public void freeze() {
+		if (frozen) throw new IllegalStateException("Registry already frozen");
+		frozen = true;
+	}
 
-    public void sendCommands(DiscordApi api) {
-        Set<SlashCommandBuilder> builders = byName.values().stream()
-                .map(index -> values.get(index).createSlashCommand())
-                .collect(Collectors.toSet());
+	public void sendCommands(DiscordApi api) {
+		Set<SlashCommandBuilder> builders = byName.values().stream()
+			.map(index -> values.get(index).createSlashCommand())
+			.collect(Collectors.toSet());
 
-        LOGGER.trace("Sending commands to discord");
-        Set<ApplicationCommand> registeredCommands = (GhostConfig.INSTANCE.debug()
-                ? api.bulkOverwriteServerApplicationCommands(GhostConfig.INSTANCE.guildId(), builders)
-                : api.bulkOverwriteGlobalApplicationCommands(builders)).join();
+		LOGGER.trace("Sending commands to discord");
+		Set<ApplicationCommand> registeredCommands = (GhostConfig.INSTANCE.debug()
+			? api.bulkOverwriteServerApplicationCommands(GhostConfig.INSTANCE.guildId(), builders)
+			: api.bulkOverwriteGlobalApplicationCommands(builders)).join();
 
-        if (GhostConfig.INSTANCE.debug())
-            api.bulkOverwriteGlobalApplicationCommands(Set.of()).join();
+		if (GhostConfig.INSTANCE.debug())
+			api.bulkOverwriteGlobalApplicationCommands(Set.of()).join();
 
-        for (ApplicationCommand command : registeredCommands) {
-            byId.put(command.getId(), byName.get(command.getName()));
-            LOGGER.trace("Initialized command {} with ID {}", command.getName(), command.getId());
-        }
-    }
+		for (ApplicationCommand command : registeredCommands) {
+			byId.put(command.getId(), byName.get(command.getName()));
+			LOGGER.trace("Initialized command {} with ID {}", command.getName(), command.getId());
+		}
+	}
 
-    @Override
-    public Optional<Command> get(String id) {
-        return Optional.ofNullable(values.get(byName.get(id)));
-    }
+	@Override
+	public Optional<Command> get(String id) {
+		return Optional.ofNullable(values.get(byName.get(id)));
+	}
 
-    public Optional<Command> get(long id) {
-        return Optional.ofNullable(values.get(byId.get(id)));
-    }
+	public Optional<Command> get(long id) {
+		return Optional.ofNullable(values.get(byId.get(id)));
+	}
 
-    @NotNull
-    @Override
-    public Iterator<Command> iterator() {
-        return values.iterator();
-    }
+	@NotNull
+	@Override
+	public Iterator<Command> iterator() {
+		return values.iterator();
+	}
 }

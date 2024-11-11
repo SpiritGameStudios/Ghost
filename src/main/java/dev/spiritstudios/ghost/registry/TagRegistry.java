@@ -19,103 +19,103 @@ import java.util.*;
 import java.util.stream.Stream;
 
 public final class TagRegistry implements Registry<String> {
-    private static final ObjectList<String> values = new ObjectArrayList<>();
-    private static List<SlashCommandOptionChoice> choices;
+	private static final ObjectList<String> values = new ObjectArrayList<>();
+	private static List<SlashCommandOptionChoice> choices;
 
-    // May contain either an id or alias as the key
-    private final Map<String, Integer> byName = new Object2IntOpenHashMap<>();
+	// May contain either an id or alias as the key
+	private final Map<String, Integer> byName = new Object2IntOpenHashMap<>();
 
-    private boolean frozen;
+	private boolean frozen;
 
-    @Override
-    public String register(String id, String entry) {
-        if (frozen) throw new IllegalStateException("Attempted to register object after registry was frozen");
+	@Override
+	public String register(String id, String entry) {
+		if (frozen) throw new IllegalStateException("Attempted to register object after registry was frozen");
 
-        values.add(entry);
-        byName.put(id, values.size() - 1);
+		values.add(entry);
+		byName.put(id, values.size() - 1);
 
-        return entry;
-    }
+		return entry;
+	}
 
-    public void registerAlias(String alias, String id) {
-        if (frozen) throw new IllegalStateException("Attempted to register object after registry was frozen");
+	public void registerAlias(String alias, String id) {
+		if (frozen) throw new IllegalStateException("Attempted to register object after registry was frozen");
 
-        byName.put(alias, byName.get(id));
-    }
+		byName.put(alias, byName.get(id));
+	}
 
-    public void load() {
-        URI uri;
-        try {
-            uri = Resources.getResource("tags").toURI();
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
+	public void load() {
+		URI uri;
+		try {
+			uri = Resources.getResource("tags").toURI();
+		} catch (URISyntaxException e) {
+			throw new RuntimeException(e);
+		}
 
-        try {
-            loadInternal(Paths.get(uri));
-        } catch (FileSystemNotFoundException e) {
-            // If we get here, we are running from a jar
-            try (FileSystem fs = FileSystems.newFileSystem(uri, new HashMap<>())) {
-                loadInternal(fs.getPath("tags"));
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
-        }
-    }
+		try {
+			loadInternal(Paths.get(uri));
+		} catch (FileSystemNotFoundException e) {
+			// If we get here, we are running from a jar
+			try (FileSystem fs = FileSystems.newFileSystem(uri, new HashMap<>())) {
+				loadInternal(fs.getPath("tags"));
+			} catch (IOException ex) {
+				throw new RuntimeException(ex);
+			}
+		}
+	}
 
-    private void loadInternal(Path tagsPath) {
-        List<Path> paths;
+	private void loadInternal(Path tagsPath) {
+		List<Path> paths;
 
-        try (Stream<Path> walk = Files.list(tagsPath);) {
-            paths = walk
-                    .map(tagsPath::relativize)
-                    .toList();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+		try (Stream<Path> walk = Files.list(tagsPath)) {
+			paths = walk
+				.map(tagsPath::relativize)
+				.toList();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 
-        if (paths.isEmpty()) throw new IllegalStateException("Tags folder is empty");
+		if (paths.isEmpty()) throw new IllegalStateException("Tags folder is empty");
 
-        Map<String, String> alias = new Object2ObjectOpenHashMap<>();
+		Map<String, String> alias = new Object2ObjectOpenHashMap<>();
 
-        for (Path path : paths) {
-            String content = FileUtil.getResource("tags/" + path.toString(), getClass().getClassLoader());
-            if (path.toString().endsWith(".md")) {
-                register(
-                        path.toString().replace(".md", ""),
-                        content
-                );
+		for (Path path : paths) {
+			String content = FileUtil.getResource("tags/" + path.toString(), getClass().getClassLoader());
+			if (path.toString().endsWith(".md")) {
+				register(
+					path.toString().replace(".md", ""),
+					content
+				);
 
-                continue;
-            }
+				continue;
+			}
 
-            if (path.toString().endsWith(".alias"))
-                alias.put(path.toString().replace(".alias", ""), content);
-        }
+			if (path.toString().endsWith(".alias"))
+				alias.put(path.toString().replace(".alias", ""), content);
+		}
 
-        alias.forEach(this::registerAlias);
-        choices = byName.keySet().stream()
-                .map(tag -> SlashCommandOptionChoice.create(tag, tag))
-                .toList();
-    }
+		alias.forEach(this::registerAlias);
+		choices = byName.keySet().stream()
+			.map(tag -> SlashCommandOptionChoice.create(tag, tag))
+			.toList();
+	}
 
-    @Override
-    public void freeze() {
-        if (frozen) throw new IllegalStateException("Registry already frozen");
-        frozen = true;
-    }
+	@Override
+	public void freeze() {
+		if (frozen) throw new IllegalStateException("Registry already frozen");
+		frozen = true;
+	}
 
-    @Override
-    public Optional<String> get(String id) {
-        return Optional.ofNullable(values.get(byName.get(id)));
-    }
+	@Override
+	public Optional<String> get(String id) {
+		return Optional.ofNullable(values.get(byName.get(id)));
+	}
 
-    @Override
-    public @NotNull Iterator<String> iterator() {
-        return values.iterator();
-    }
+	@Override
+	public @NotNull Iterator<String> iterator() {
+		return values.iterator();
+	}
 
-    public List<SlashCommandOptionChoice> choices() {
-        return choices;
-    }
+	public List<SlashCommandOptionChoice> choices() {
+		return choices;
+	}
 }

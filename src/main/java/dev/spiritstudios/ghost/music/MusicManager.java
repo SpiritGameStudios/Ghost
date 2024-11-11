@@ -24,97 +24,97 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class MusicManager extends AudioEventAdapter {
-    private static final Map<Long, MusicManager> MANAGERS = new Long2ObjectOpenHashMap<>();
+	private static final Map<Long, MusicManager> MANAGERS = new Long2ObjectOpenHashMap<>();
 
-    private final AudioPlayer player;
-    private final Queue<AudioTrack> queue = new LinkedBlockingQueue<>();
-    private final ServerVoiceChannel channel;
-    private AudioConnection connection;
+	private final AudioPlayer player;
+	private final Queue<AudioTrack> queue = new LinkedBlockingQueue<>();
+	private final ServerVoiceChannel channel;
+	private AudioConnection connection;
 
-    public static MusicManager getOrCreate(ServerVoiceChannel channel) {
-        return MANAGERS.computeIfAbsent(channel.getId(), key -> new MusicManager(channel));
-    }
+	public static MusicManager getOrCreate(ServerVoiceChannel channel) {
+		return MANAGERS.computeIfAbsent(channel.getId(), key -> new MusicManager(channel));
+	}
 
-    public static Optional<MusicManager> get(ServerVoiceChannel channel) {
-        return Optional.ofNullable(MANAGERS.get(channel.getId()));
-    }
+	public static Optional<MusicManager> get(ServerVoiceChannel channel) {
+		return Optional.ofNullable(MANAGERS.get(channel.getId()));
+	}
 
-    private MusicManager(ServerVoiceChannel channel) {
-        this.channel = channel;
-        this.player = SharedConstants.PLAYER_MANAGER.createPlayer();
-        player.addListener(this);
+	private MusicManager(ServerVoiceChannel channel) {
+		this.channel = channel;
+		this.player = SharedConstants.PLAYER_MANAGER.createPlayer();
+		player.addListener(this);
 
-        AudioSource source = new LavaplayerAudioSource(Ghost.getApi(), player);
+		AudioSource source = new LavaplayerAudioSource(Ghost.getApi(), player);
 
-        channel.connect().thenAccept(connection -> {
-            connection.setAudioSource(source);
-            this.connection = connection;
-        });
+		channel.connect().thenAccept(connection -> {
+			connection.setAudioSource(source);
+			this.connection = connection;
+		});
 
-        MANAGERS.put(channel.getId(), this);
-    }
+		MANAGERS.put(channel.getId(), this);
+	}
 
-    public void push(AudioTrack track) {
-        boolean didStartTrack = player.startTrack(track, true);
-        if (!didStartTrack) queue.offer(track);
-        else nowPlaying(track);
-    }
+	public void push(AudioTrack track) {
+		boolean didStartTrack = player.startTrack(track, true);
+		if (!didStartTrack) queue.offer(track);
+		else nowPlaying(track);
+	}
 
-    public void pop() {
-        AudioTrack track = queue.poll();
-        player.startTrack(track, false);
+	public void pop() {
+		AudioTrack track = queue.poll();
+		player.startTrack(track, false);
 
-        if (track == null) {
-            destroy();
-            return;
-        }
-        
-        nowPlaying(track);
-    }
+		if (track == null) {
+			destroy();
+			return;
+		}
 
-    public boolean isEmpty() {
-        return queue.isEmpty();
-    }
+		nowPlaying(track);
+	}
 
-    public void destroy() {
-        player.destroy();
-        connection.close();
-        MANAGERS.remove(channel.getId());
-    }
+	public boolean isEmpty() {
+		return queue.isEmpty();
+	}
 
-    @Override
-    public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason endReason) {
-        if (endReason.mayStartNext) pop();
-    }
+	public void destroy() {
+		player.destroy();
+		connection.close();
+		MANAGERS.remove(channel.getId());
+	}
 
-    public void setPaused(boolean value) {
-        player.setPaused(value);
-    }
+	@Override
+	public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason endReason) {
+		if (endReason.mayStartNext) pop();
+	}
 
-    private void nowPlaying(AudioTrack track) {
-        AudioTrackInfo info = track.getInfo();
+	public void setPaused(boolean value) {
+		player.setPaused(value);
+	}
 
-        EmbedBuilder nowPlaying = new EmbedBuilder()
-                .setTitle(info.title)
-                .setUrl(info.uri)
-                .addInlineField("Length", StringUtil.formatDuration(Duration.ofMillis(info.length)))
-                .setAuthor(info.author);
+	private void nowPlaying(AudioTrack track) {
+		AudioTrackInfo info = track.getInfo();
 
-        if (track.getInfo().artworkUrl != null) {
-            nowPlaying.setThumbnail(info.artworkUrl);
-            HttpHelper.getImage(info.artworkUrl)
-                    .thenCompose(icon -> {
-                        nowPlaying.setColor(new Color(ImageHelper.getCommonColor(icon)));
-                        return channel.sendMessage(nowPlaying);
-                    }).whenComplete((ignored, throwable) -> {
-                        if (throwable == null) return;
+		EmbedBuilder nowPlaying = new EmbedBuilder()
+			.setTitle(info.title)
+			.setUrl(info.uri)
+			.addInlineField("Length", StringUtil.formatDuration(Duration.ofMillis(info.length)))
+			.setAuthor(info.author);
 
-                        Ghost.logError("", throwable);
-                    });
+		if (track.getInfo().artworkUrl != null) {
+			nowPlaying.setThumbnail(info.artworkUrl);
+			HttpHelper.getImage(info.artworkUrl)
+				.thenCompose(icon -> {
+					nowPlaying.setColor(new Color(ImageHelper.getCommonColor(icon)));
+					return channel.sendMessage(nowPlaying);
+				}).whenComplete((ignored, throwable) -> {
+					if (throwable == null) return;
 
-            return;
-        }
+					Ghost.logError("", throwable);
+				});
 
-        channel.sendMessage(nowPlaying);
-    }
+			return;
+		}
+
+		channel.sendMessage(nowPlaying);
+	}
 }

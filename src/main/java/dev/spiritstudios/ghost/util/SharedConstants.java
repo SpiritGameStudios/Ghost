@@ -9,21 +9,21 @@ import dev.callmeecho.maze.RateLimitedClient;
 import dev.spiritstudios.ghost.GhostConfig;
 
 public final class SharedConstants {
-    public static final Labrinth MODRINTH_API = new Labrinth(RateLimitedClient.builder()
-            .apiKey(GhostConfig.INSTANCE.modrinthApiKey())
-            .baseUrl("https://api.modrinth.com/v2")
-            .userAgent("SpiritGameStudios/Ghost (spiritstudios.dev)")
-            .build());
+	public static final Labrinth MODRINTH_API = new Labrinth(RateLimitedClient.builder()
+		.apiKey(GhostConfig.INSTANCE.modrinthApiKey())
+		.baseUrl("https://api.modrinth.com/v2")
+		.userAgent("SpiritGameStudios/Ghost (spiritstudios.dev)")
+		.build());
 
-    public static final AudioPlayerManager PLAYER_MANAGER = Util.make(
-            new DefaultAudioPlayerManager(),
-            manager -> {
-                manager.registerSourceManager(SoundCloudAudioSourceManager.createDefault());
-                manager.registerSourceManager(new BandcampAudioSourceManager());
-            }
-    );
+	public static final AudioPlayerManager PLAYER_MANAGER = Util.make(
+		new DefaultAudioPlayerManager(),
+		manager -> {
+			manager.registerSourceManager(SoundCloudAudioSourceManager.createDefault());
+			manager.registerSourceManager(new BandcampAudioSourceManager());
+		}
+	);
 
-    private SharedConstants() {
-        Util.utilError();
-    }
+	private SharedConstants() {
+		Util.utilError();
+	}
 }

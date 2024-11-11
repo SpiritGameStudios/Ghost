@@ -11,23 +11,23 @@ import dev.spiritstudios.ghost.command.tool.TagCommand;
 import dev.spiritstudios.ghost.registry.Registries;
 
 public final class Commands {
-    public static final Command PING = register(new PingCommand());
-    public static final Command GRAB_EMOJI = register(new GrabEmojiCommand());
-    public static final Command TAG = register(new TagCommand());
-    public static final Command AVATAR = register(new AvatarCommand());
-    public static final Command MODRINTH = register(new ModrinthCommand());
+	public static final Command PING = register(new PingCommand());
+	public static final Command GRAB_EMOJI = register(new GrabEmojiCommand());
+	public static final Command TAG = register(new TagCommand());
+	public static final Command AVATAR = register(new AvatarCommand());
+	public static final Command MODRINTH = register(new ModrinthCommand());
 
-    public static final Command BAN = register(new BanCommand());
-    public static final Command KICK = register(new KickCommand());
+	public static final Command BAN = register(new BanCommand());
+	public static final Command KICK = register(new KickCommand());
 
-    public static final Command MUSIC = register(new MusicCommand());
+	public static final Command MUSIC = register(new MusicCommand());
 
-    private static <T extends Command> T register(T entry) {
-        Registries.COMMAND.register(entry.getName(), entry);
-        return entry;
-    }
+	private static <T extends Command> T register(T entry) {
+		Registries.COMMAND.register(entry.getName(), entry);
+		return entry;
+	}
 
-    public static void init() {
-        // NO-OP
-    }
+	public static void init() {
+		// NO-OP
+	}
 }

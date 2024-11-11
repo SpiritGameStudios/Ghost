@@ -15,62 +15,62 @@ import java.net.URI;
 import java.net.URL;
 
 public class GrabEmojiCommand implements Command {
-    @Override
-    public String getName() {
-        return "grabemoji";
-    }
+	@Override
+	public String getName() {
+		return "grabemoji";
+	}
 
-    @Override
-    public SlashCommandBuilder createSlashCommand() {
-        return SlashCommand.with(getName(), "Grab an emoji from a message")
-                .addOption(SlashCommandOption.createStringOption(
-                        "name",
-                        "The name of the emoji",
-                        true
-                ))
-                .addOption(SlashCommandOption.createStringOption(
-                        "url",
-                        "The URL of the emoji",
-                        true))
-                .setEnabledInDms(false)
-                .setDefaultEnabledForPermissions(PermissionType.MANAGE_EMOJIS);
-    }
+	@Override
+	public SlashCommandBuilder createSlashCommand() {
+		return SlashCommand.with(getName(), "Grab an emoji from a message")
+			.addOption(SlashCommandOption.createStringOption(
+				"name",
+				"The name of the emoji",
+				true
+			))
+			.addOption(SlashCommandOption.createStringOption(
+				"url",
+				"The URL of the emoji",
+				true))
+			.setEnabledInDms(false)
+			.setDefaultEnabledForPermissions(PermissionType.MANAGE_EMOJIS);
+	}
 
-    @Override
-    public void execute(SlashCommandInteraction interaction, DiscordApi api) {
-        Server server = interaction.getServer().orElseThrow();
+	@Override
+	public void execute(SlashCommandInteraction interaction, DiscordApi api) {
+		Server server = interaction.getServer().orElseThrow();
 
-        if (!server.canYouManageEmojis()) {
-            EmbedUtil.error("Ghost does not have permission to manage emojis", interaction);
-            return;
-        }
+		if (!server.canYouManageEmojis()) {
+			EmbedUtil.error("Ghost does not have permission to manage emojis", interaction);
+			return;
+		}
 
-        String name = interaction.getOptionByName("name").orElseThrow().getStringValue().orElseThrow();
+		String name = interaction.getOptionByName("name").orElseThrow().getStringValue().orElseThrow();
 
-        URL url;
-        try {
-            url = URI.create(interaction.getOptionByName("url")
-                    .flatMap(SlashCommandInteractionOption::getStringValue)
-                    .orElseThrow()).toURL();
-        } catch (MalformedURLException | IllegalArgumentException e) {
-            EmbedUtil.error("Invalid URL", interaction);
-            return;
-        }
+		URL url;
+		try {
+			url = URI.create(interaction.getOptionByName("url")
+				.flatMap(SlashCommandInteractionOption::getStringValue)
+				.orElseThrow()).toURL();
+		} catch (MalformedURLException | IllegalArgumentException e) {
+			EmbedUtil.error("Invalid URL", interaction);
+			return;
+		}
 
-        server.createCustomEmojiBuilder()
-                .setName(name)
-                .setImage(url)
-                .create()
-                .thenCompose(emoji -> {
-                    EmbedBuilder embed = new EmbedBuilder()
-                            .setTitle("Emoji Created")
-                            .setDescription(":%s: has been created".formatted(name))
-                            .setColor(CommonColors.GREEN)
-                            .setThumbnail(url.toString());
+		server.createCustomEmojiBuilder()
+			.setName(name)
+			.setImage(url)
+			.create()
+			.thenCompose(emoji -> {
+				EmbedBuilder embed = new EmbedBuilder()
+					.setTitle("Emoji Created")
+					.setDescription(":%s: has been created".formatted(name))
+					.setColor(CommonColors.GREEN)
+					.setThumbnail(url.toString());
 
-                    return interaction.createImmediateResponder()
-                            .addEmbed(embed)
-                            .respond();
-                });
-    }
+				return interaction.createImmediateResponder()
+					.addEmbed(embed)
+					.respond();
+			});
+	}
 }

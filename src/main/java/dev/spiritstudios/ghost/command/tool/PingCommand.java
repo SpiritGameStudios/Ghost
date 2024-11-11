@@ -12,32 +12,32 @@ import java.awt.*;
 import java.time.temporal.ChronoUnit;
 
 public class PingCommand implements Command {
-    @Override
-    public String getName() {
-        return "ping";
-    }
+	@Override
+	public String getName() {
+		return "ping";
+	}
 
-    @Override
-    public SlashCommandBuilder createSlashCommand() {
-        return SlashCommand.with(getName(), "See the bot's latency");
-    }
+	@Override
+	public SlashCommandBuilder createSlashCommand() {
+		return SlashCommand.with(getName(), "See the bot's latency");
+	}
 
-    @Override
-    public void execute(SlashCommandInteraction interaction, DiscordApi api) {
-        interaction.getChannel().orElseThrow().sendMessage("Pinging...").thenCompose(message -> {
-            long roundtripLatency = ChronoUnit.MILLIS.between(interaction.getCreationTimestamp(), message.getCreationTimestamp());
-            long gatewayLatency = api.getLatestGatewayLatency().toMillis();
+	@Override
+	public void execute(SlashCommandInteraction interaction, DiscordApi api) {
+		interaction.getChannel().orElseThrow().sendMessage("Pinging...").thenCompose(message -> {
+			long roundtripLatency = ChronoUnit.MILLIS.between(interaction.getCreationTimestamp(), message.getCreationTimestamp());
+			long gatewayLatency = api.getLatestGatewayLatency().toMillis();
 
-            Color color = roundtripLatency < 150 ? CommonColors.GREEN : roundtripLatency < 250 ? CommonColors.YELLOW : CommonColors.RED;
+			Color color = roundtripLatency < 150 ? CommonColors.GREEN : roundtripLatency < 250 ? CommonColors.YELLOW : CommonColors.RED;
 
-            EmbedBuilder embed = new EmbedBuilder()
-                    .setTitle("Pong!")
-                    .addField("Roundtrip Latency", "%dms".formatted(roundtripLatency), true)
-                    .addField("Gateway Latency", "%dms".formatted(gatewayLatency), true)
-                    .setColor(color);
+			EmbedBuilder embed = new EmbedBuilder()
+				.setTitle("Pong!")
+				.addField("Roundtrip Latency", "%dms".formatted(roundtripLatency), true)
+				.addField("Gateway Latency", "%dms".formatted(gatewayLatency), true)
+				.setColor(color);
 
-            return message.delete().thenCompose(
-                    ignored -> interaction.createImmediateResponder().addEmbed(embed).respond());
-        });
-    }
+			return message.delete().thenCompose(
+				ignored -> interaction.createImmediateResponder().addEmbed(embed).respond());
+		});
+	}
 }

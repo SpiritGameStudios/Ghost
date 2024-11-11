@@ -11,17 +11,17 @@ import org.javacord.api.entity.emoji.KnownCustomEmoji;
 import org.javacord.api.listener.GloballyAttachableListener;
 
 public final class Registries {
-    private static final Logger LOGGER = LogManager.getLogger(Registries.class);
+	private static final Logger LOGGER = LogManager.getLogger(Registries.class);
 
-    public static final CommandRegistry COMMAND = new CommandRegistry();
+	public static final CommandRegistry COMMAND = new CommandRegistry();
 
-    public static final Registry<GloballyAttachableListener> LISTENER = new SimpleRegistry<>();
+	public static final Registry<GloballyAttachableListener> LISTENER = new SimpleRegistry<>();
 
-    public static final Registry<KnownCustomEmoji> CUSTOM_EMOJI = new SimpleRegistry<>();
+	public static final Registry<KnownCustomEmoji> CUSTOM_EMOJI = new SimpleRegistry<>();
 
-    public static final TagRegistry TAG = new TagRegistry();
+	public static final TagRegistry TAG = new TagRegistry();
 
-    private Registries() {
-        Util.utilError();
-    }
+	private Registries() {
+		Util.utilError();
+	}
 }

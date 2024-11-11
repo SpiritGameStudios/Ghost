@@ -10,24 +10,24 @@ import java.net.http.HttpResponse;
 import java.util.concurrent.CompletableFuture;
 
 public final class HttpHelper {
-    public static CompletableFuture<BufferedImage> getImage(String url) {
-        try (HttpClient client = HttpClient.newHttpClient()) {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .build();
+	public static CompletableFuture<BufferedImage> getImage(String url) {
+		try (HttpClient client = HttpClient.newHttpClient()) {
+			HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create(url))
+				.build();
 
-            return client.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream())
-                    .thenApply(response -> {
-                        try {
-                            return ImageIO.read(response.body());
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-        }
-    }
+			return client.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream())
+				.thenApply(response -> {
+					try {
+						return ImageIO.read(response.body());
+					} catch (IOException e) {
+						throw new RuntimeException(e);
+					}
+				});
+		}
+	}
 
-    private HttpHelper() {
-        Util.utilError();
-    }
+	private HttpHelper() {
+		Util.utilError();
+	}
 }
