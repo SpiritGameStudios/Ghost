@@ -1,8 +1,6 @@
 package dev.spiritstudios.ghost.command;
 
 import dev.spiritstudios.ghost.command.mod.ModrinthCommand;
-import dev.spiritstudios.ghost.command.moderation.BanCommand;
-import dev.spiritstudios.ghost.command.moderation.KickCommand;
 import dev.spiritstudios.ghost.command.music.MusicCommand;
 import dev.spiritstudios.ghost.command.tool.AvatarCommand;
 import dev.spiritstudios.ghost.command.tool.GrabEmojiCommand;
@@ -10,15 +8,12 @@ import dev.spiritstudios.ghost.command.tool.PingCommand;
 import dev.spiritstudios.ghost.command.tool.TagCommand;
 import dev.spiritstudios.ghost.registry.Registries;
 
-public final class Commands {
+public final class GhostCommands {
 	public static final Command PING = register(new PingCommand());
 	public static final Command GRAB_EMOJI = register(new GrabEmojiCommand());
 	public static final Command TAG = register(new TagCommand());
 	public static final Command AVATAR = register(new AvatarCommand());
 	public static final Command MODRINTH = register(new ModrinthCommand());
-
-	public static final Command BAN = register(new BanCommand());
-	public static final Command KICK = register(new KickCommand());
 
 	public static final Command MUSIC = register(new MusicCommand());
 

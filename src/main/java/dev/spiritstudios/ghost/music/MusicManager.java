@@ -11,47 +11,55 @@ import dev.spiritstudios.ghost.util.HttpHelper;
 import dev.spiritstudios.ghost.util.ImageHelper;
 import dev.spiritstudios.ghost.util.StringUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import org.javacord.api.audio.AudioConnection;
-import org.javacord.api.audio.AudioSource;
-import org.javacord.api.entity.channel.ServerVoiceChannel;
-import org.javacord.api.entity.message.embed.EmbedBuilder;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.audio.AudioSendHandler;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
+import net.dv8tion.jda.api.managers.AudioManager;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.Consumer;
 
 public class MusicManager extends AudioEventAdapter {
 	private static final Map<Long, MusicManager> MANAGERS = new Long2ObjectOpenHashMap<>();
 
 	private final AudioPlayer player;
 	private final Queue<AudioTrack> queue = new LinkedBlockingQueue<>();
-	private final ServerVoiceChannel channel;
-	private AudioConnection connection;
+	private final AudioChannel channel;
 
-	public static MusicManager getOrCreate(ServerVoiceChannel channel) {
-		return MANAGERS.computeIfAbsent(channel.getId(), key -> new MusicManager(channel));
+	public static MusicManager getOrCreate(AudioChannel channel) {
+		return MANAGERS.computeIfAbsent(channel.getIdLong(), key -> new MusicManager(channel));
 	}
 
-	public static Optional<MusicManager> get(ServerVoiceChannel channel) {
-		return Optional.ofNullable(MANAGERS.get(channel.getId()));
+	public static Optional<MusicManager> get(AudioChannel channel) {
+		return Optional.ofNullable(MANAGERS.get(channel.getIdLong()));
 	}
 
-	private MusicManager(ServerVoiceChannel channel) {
+	private MusicManager(AudioChannel channel) {
 		this.channel = channel;
 		this.player = SharedConstants.PLAYER_MANAGER.createPlayer();
 		player.addListener(this);
 
-		AudioSource source = new LavaplayerAudioSource(Ghost.getApi(), player);
+		AudioSendHandler source = new LavaplayerAudioSource(player);
+		AudioManager manager = channel.getGuild().getAudioManager();
 
-		channel.connect().thenAccept(connection -> {
-			connection.setAudioSource(source);
-			this.connection = connection;
-		});
+		manager.openAudioConnection(channel);
+		manager.setSendingHandler(source);
 
-		MANAGERS.put(channel.getId(), this);
+		MANAGERS.put(channel.getIdLong(), this);
 	}
 
 	public void push(AudioTrack track) {
@@ -78,8 +86,11 @@ public class MusicManager extends AudioEventAdapter {
 
 	public void destroy() {
 		player.destroy();
-		connection.close();
-		MANAGERS.remove(channel.getId());
+
+		AudioManager manager = channel.getGuild().getAudioManager();
+		manager.closeAudioConnection();
+
+		MANAGERS.remove(channel.getIdLong());
 	}
 
 	@Override
@@ -97,24 +108,41 @@ public class MusicManager extends AudioEventAdapter {
 		EmbedBuilder nowPlaying = new EmbedBuilder()
 			.setTitle(info.title)
 			.setUrl(info.uri)
-			.addInlineField("Length", StringUtil.formatDuration(Duration.ofMillis(info.length)))
+			.addField("Length", StringUtil.formatDuration(Duration.ofMillis(info.length)), true)
 			.setAuthor(info.author);
 
 		if (track.getInfo().artworkUrl != null) {
 			nowPlaying.setThumbnail(info.artworkUrl);
-			HttpHelper.getImage(info.artworkUrl)
-				.thenCompose(icon -> {
-					nowPlaying.setColor(new Color(ImageHelper.getCommonColor(icon)));
-					return channel.sendMessage(nowPlaying);
-				}).whenComplete((ignored, throwable) -> {
-					if (throwable == null) return;
+			try {
+				BufferedImage image = HttpHelper.getImage(info.artworkUrl);
+				nowPlaying.setColor(new Color(ImageHelper.getCommonColor(image)));
+			} catch (IOException ignored) {
 
-					Ghost.logError("", throwable);
-				});
-
-			return;
+			}
 		}
 
-		channel.sendMessage(nowPlaying);
+		if (channel instanceof VoiceChannel voiceChannel)
+			voiceChannel.sendMessageEmbeds(nowPlaying.build()).queue();
+	}
+
+	public List<MessageEmbed> viewQueue() {
+		List<MessageEmbed> embeds = new ArrayList<>();
+
+		queue.forEach(track -> {
+			AudioTrackInfo info = track.getInfo();
+
+			EmbedBuilder embed = new EmbedBuilder()
+				.setTitle(info.title)
+				.setUrl(info.uri)
+				.addField("Length", StringUtil.formatDuration(Duration.ofMillis(track.getDuration())), true)
+				.setAuthor(info.author)
+				.setFooter("%d/%d".formatted(embeds.size() + 1, queue.size()));
+
+			if (info.artworkUrl != null) embed.setThumbnail(info.artworkUrl);
+
+			embeds.add(embed.build());
+		});
+
+		return embeds;
 	}
 }

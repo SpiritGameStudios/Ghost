@@ -1,5 +1,4 @@
 plugins {
-    java
     application
 }
 
@@ -12,18 +11,18 @@ java {
 }
 
 repositories {
-    maven("https://maven.callmeecho.dev/snapshots")
 
     mavenCentral()
     maven("https://maven.lavalink.dev/releases")
     maven("https://libraries.minecraft.net")
     maven("https://maven.lukebemish.dev/releases")
+	maven("https://maven.spiritstudios.dev/snapshots")
 }
 
 dependencies {
     compileOnly(libs.annotations)
 
-    implementation(libs.javacord)
+    implementation(libs.jda)
 
     implementation(libs.log4j.core)
     implementation(libs.log4j.slf4j)
@@ -34,7 +33,9 @@ dependencies {
     implementation(libs.maze)
 
     implementation(libs.lavaplayer)
-    implementation(libs.lavaplayer.youtube)
+
+	implementation(libs.udpqueue.linux.x86)
+	implementation(libs.udpqueue.windows.x86)
 }
 
 application {

@@ -1,20 +1,22 @@
 package dev.spiritstudios.ghost.command;
 
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.commands.CommandAutoCompleteInteraction;
+import net.dv8tion.jda.api.interactions.commands.SlashCommandInteraction;
+import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.javacord.api.DiscordApi;
-import org.javacord.api.interaction.AutocompleteInteraction;
-import org.javacord.api.interaction.SlashCommandBuilder;
-import org.javacord.api.interaction.SlashCommandInteraction;
 
 public interface Command {
 	String getName();
 
-	SlashCommandBuilder createSlashCommand();
+	SlashCommandData createSlashCommand();
 
-	void execute(SlashCommandInteraction interaction, DiscordApi api);
+	void execute(CommandContext context);
 
-	default void autoComplete(AutocompleteInteraction interaction, DiscordApi api) {
+	default void autoComplete(CommandAutoCompleteInteraction interaction) {
 	}
 
 	/**

@@ -2,6 +2,7 @@ package dev.spiritstudios.ghost;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
@@ -33,15 +34,15 @@ public record GhostConfig(
 
 		if (!Files.exists(path)) throw new IllegalArgumentException("Config file does not exist");
 
-		List<String> lines;
+		String file;
 
 		try {
-			lines = Files.readAllLines(path);
+			file = Files.readString(path);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 
-		JsonElement element = new Gson().fromJson(String.join("\n", lines), JsonElement.class);
+		JsonElement element = JsonParser.parseString(file);
 		DataResult<GhostConfig> result = GhostConfig.CODEC.parse(JsonOps.INSTANCE, element);
 
 		if (result.error().isPresent())

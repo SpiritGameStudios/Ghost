@@ -19,5 +19,7 @@ build/
 **/build/
 run/
 
+config.json
+
 !gradle-wrapper.jar
 

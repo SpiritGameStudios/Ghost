@@ -1,43 +1,35 @@
 package dev.spiritstudios.ghost.music;
 
-import com.sedmelluq.discord.lavaplayer.format.StandardAudioDataFormats;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
-import com.sedmelluq.discord.lavaplayer.track.playback.AudioFrame;
 import com.sedmelluq.discord.lavaplayer.track.playback.MutableAudioFrame;
-import org.javacord.api.DiscordApi;
-import org.javacord.api.audio.AudioSource;
-import org.javacord.api.audio.AudioSourceBase;
+import net.dv8tion.jda.api.audio.AudioSendHandler;
 
 import java.nio.ByteBuffer;
 
-public class LavaplayerAudioSource extends AudioSourceBase {
+public class LavaplayerAudioSource implements AudioSendHandler {
 	private final AudioPlayer player;
+	private final ByteBuffer buffer;
 	private final MutableAudioFrame frame;
 
-	public LavaplayerAudioSource(DiscordApi api, AudioPlayer player) {
-		super(api);
+	public LavaplayerAudioSource(AudioPlayer player) {
 		this.player = player;
+		this.buffer = ByteBuffer.allocate(1024);
 		this.frame = new MutableAudioFrame();
-		this.frame.setBuffer(ByteBuffer.allocate(StandardAudioDataFormats.DISCORD_OPUS.maximumChunkSize()));
+		this.frame.setBuffer(buffer);
 	}
 
 	@Override
-	public byte[] getNextFrame() {
-		return this.applyTransformers(frame.getData());
-	}
-
-	@Override
-	public boolean hasNextFrame() {
+	public boolean canProvide() {
 		return player.provide(frame);
 	}
 
 	@Override
-	public AudioSource copy() {
-		return new LavaplayerAudioSource(this.getApi(), player);
+	public ByteBuffer provide20MsAudio() {
+		return buffer.flip();
 	}
 
 	@Override
-	public boolean hasFinished() {
-		return false;
+	public boolean isOpus() {
+		return true;
 	}
 }

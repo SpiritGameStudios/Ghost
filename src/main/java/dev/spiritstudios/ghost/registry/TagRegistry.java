@@ -6,21 +6,17 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import org.javacord.api.interaction.SlashCommandOptionChoice;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Stream;
 
 public final class TagRegistry implements Registry<String> {
 	private static final ObjectList<String> values = new ObjectArrayList<>();
-	private static List<SlashCommandOptionChoice> choices;
 
 	// May contain either an id or alias as the key
 	private final Map<String, Integer> byName = new Object2IntOpenHashMap<>();
@@ -94,9 +90,6 @@ public final class TagRegistry implements Registry<String> {
 		}
 
 		alias.forEach(this::registerAlias);
-		choices = byName.keySet().stream()
-			.map(tag -> SlashCommandOptionChoice.create(tag, tag))
-			.toList();
 	}
 
 	@Override
@@ -111,11 +104,12 @@ public final class TagRegistry implements Registry<String> {
 	}
 
 	@Override
-	public @NotNull Iterator<String> iterator() {
-		return values.iterator();
+	public Set<String> keySet() {
+		return byName.keySet();
 	}
 
-	public List<SlashCommandOptionChoice> choices() {
-		return choices;
+	@Override
+	public @NotNull Iterator<String> iterator() {
+		return values.iterator();
 	}
 }

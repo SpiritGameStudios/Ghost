@@ -1,13 +1,14 @@
 package dev.spiritstudios.ghost.listener;
 
 import dev.spiritstudios.ghost.registry.Registries;
-import org.javacord.api.event.interaction.AutocompleteCreateEvent;
-import org.javacord.api.listener.interaction.AutocompleteCreateListener;
+import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import org.jetbrains.annotations.NotNull;
 
-public final class AutoCompleteListener implements AutocompleteCreateListener {
+public final class AutoCompleteListener extends ListenerAdapter {
 	@Override
-	public void onAutocompleteCreate(AutocompleteCreateEvent event) {
-		Registries.COMMAND.get(event.getAutocompleteInteraction().getCommandId())
-			.ifPresent(c -> c.autoComplete(event.getAutocompleteInteraction(), event.getApi()));
+	public void onCommandAutoCompleteInteraction(@NotNull CommandAutoCompleteInteractionEvent event) {
+		Registries.COMMAND.get(event.getCommandIdLong())
+			.ifPresent(c -> c.autoComplete(event));
 	}
 }

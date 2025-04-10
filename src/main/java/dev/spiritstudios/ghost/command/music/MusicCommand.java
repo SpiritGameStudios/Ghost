@@ -5,15 +5,24 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
+import dev.spiritstudios.ghost.command.CommandContext;
 import dev.spiritstudios.ghost.command.CommandWithSubcommands;
-import dev.spiritstudios.ghost.util.EmbedUtil;
 import dev.spiritstudios.ghost.data.CommonColors;
+import dev.spiritstudios.ghost.menu.Paginator;
 import dev.spiritstudios.ghost.music.MusicManager;
+import dev.spiritstudios.ghost.util.EmbedUtil;
 import dev.spiritstudios.ghost.util.SharedConstants;
-import org.javacord.api.DiscordApi;
-import org.javacord.api.entity.channel.ServerVoiceChannel;
-import org.javacord.api.entity.message.MessageFlag;
-import org.javacord.api.interaction.*;
+import net.dv8tion.jda.api.entities.GuildVoiceState;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.utils.messages.MessageEditData;
+import net.dv8tion.jda.internal.interactions.component.ButtonImpl;
 
 import java.util.List;
 import java.util.Map;
@@ -26,114 +35,138 @@ public class MusicCommand implements CommandWithSubcommands {
 	}
 
 	@Override
-	public SlashCommandBuilder createSlashCommand() {
-		return SlashCommand.with(getName(), "Play music from SoundCloud or Bandcamp in a voice channel")
-			.addOption(SlashCommandOption.createSubcommand(
-				"play",
-				"Play a song",
-				List.of(SlashCommandOption.createStringOption("song", "The song to play, either a URL or a search term", true))
-			))
-			.addOption(SlashCommandOption.createSubcommand(
-				"pause",
-				"Pause the current song"
-			))
-			.addOption(SlashCommandOption.createSubcommand(
-				"unpause",
-				"Resume the current song"
-			))
-			.addOption(SlashCommandOption.createSubcommand(
-				"stop",
-				"Stop playing music"
-			))
-			.addOption(SlashCommandOption.createSubcommand(
-				"skip",
-				"Skip the current song"
-			));
+	public SlashCommandData createSlashCommand() {
+		return Commands.slash(getName(), "Play music from SoundCloud or Bandcamp in a voice channel")
+			.addSubcommands(
+				new SubcommandData(
+					"play",
+					"Play a song"
+				).addOption(
+					OptionType.STRING,
+					"song",
+					"The song to play, either a URL or a search term",
+					true
+				),
+				new SubcommandData(
+					"pause",
+					"Pause the current song"
+				),
+				new SubcommandData(
+					"unpause",
+					"Resume the current song"
+				),
+				new SubcommandData(
+					"stop",
+					"Stop playing music"
+				),
+				new SubcommandData(
+					"skip",
+					"Skip the current song"
+				),
+				new SubcommandData(
+					"queue",
+					"View the contents of the queue"
+				)
+			);
 	}
 
 	@Override
 	public Map<String, Subcommand> getSubcommands() {
 		return Map.of(
 			"play", MusicCommand::play,
-			"pause", (interaction, options, api) -> setPaused(true, interaction),
-			"unpause", (interaction, options, api) -> setPaused(false, interaction),
+			"pause", (context) -> setPaused(true, context),
+			"unpause", (context) -> setPaused(false, context),
 			"stop", MusicCommand::stop,
-			"skip", MusicCommand::skip
+			"skip", MusicCommand::skip,
+			"queue", MusicCommand::queue
 		);
 	}
 
-	private static void skip(SlashCommandInteraction interaction, SlashCommandInteractionOptionsProvider options, DiscordApi api) {
-		Optional<ServerVoiceChannel> channel = interaction.getUser().getConnectedVoiceChannel(interaction.getServer().orElseThrow());
+	private static void queue(CommandContext context) {
+		Optional<AudioChannel> channel = channel(context);
 
 		if (channel.isEmpty()) {
-			notInVcError(interaction);
+			notInVcError(context);
+			return;
+		}
+
+		MusicManager.get(channel.get()).ifPresentOrElse(
+			scheduler -> {
+				List<MessageEditData> pages = scheduler.viewQueue().stream()
+					.map(MessageEditData::fromEmbeds)
+					.toList();
+
+				Paginator paginator = new Paginator(pages);
+				paginator.send(context.interaction());
+			},
+			() -> noMusicError(context)
+		);
+	}
+
+	private static void skip(CommandContext context) {
+		Optional<AudioChannel> channel = channel(context);
+
+		if (channel.isEmpty()) {
+			notInVcError(context);
 			return;
 		}
 
 		MusicManager.get(channel.get()).ifPresentOrElse(
 			scheduler -> {
 				scheduler.pop();
-				interaction.createImmediateResponder()
-					.addEmbed(EmbedUtil.titleOnly("Song Skipped", CommonColors.GREEN)).respond();
+				context.reply(EmbedUtil.titleOnly("Song Skipped", CommonColors.GREEN)).queue();
 			},
-			() -> noMusicError(interaction)
+			() -> noMusicError(context)
 		);
 	}
 
-	private static void stop(SlashCommandInteraction interaction, SlashCommandInteractionOptionsProvider options, DiscordApi api) {
-		Optional<ServerVoiceChannel> channel = interaction.getUser().getConnectedVoiceChannel(interaction.getServer().orElseThrow());
+	private static void stop(CommandContext context) {
+		Optional<AudioChannel> channel = channel(context);
 
 		if (channel.isEmpty()) {
-			notInVcError(interaction);
+			notInVcError(context);
 			return;
 		}
 
 		MusicManager.get(channel.get()).ifPresentOrElse(
 			scheduler -> {
 				scheduler.destroy();
-				interaction.createImmediateResponder()
-					.addEmbed(EmbedUtil.titleOnly("Music Stopped", CommonColors.GREEN)).respond();
+				context.reply(EmbedUtil.titleOnly("Music Stopped", CommonColors.GREEN)).queue();
 			},
-			() -> noMusicError(interaction)
+			() -> noMusicError(context)
 		);
 	}
 
-	private static void setPaused(boolean value, SlashCommandInteraction interaction) {
-		Optional<ServerVoiceChannel> channel = interaction.getUser().getConnectedVoiceChannel(interaction.getServer().orElseThrow());
+	private static void setPaused(boolean value, CommandContext context) {
+		Optional<AudioChannel> channel = channel(context);
 
 		if (channel.isEmpty()) {
-			interaction.createImmediateResponder()
-				.addEmbed(EmbedUtil.error("You are not currently in a voice channel"))
-				.setFlags(MessageFlag.EPHEMERAL)
-				.respond();
-
+			notInVcError(context);
 			return;
 		}
 
 		MusicManager.get(channel.get()).ifPresentOrElse(
 			scheduler -> {
 				scheduler.setPaused(value);
-				interaction.createImmediateResponder()
-					.addEmbed(EmbedUtil.titleOnly(value ? "Music Paused" : "Music Resumed", CommonColors.BLURPLE)).respond();
+				context.reply(EmbedUtil.titleOnly(value ? "Music Paused" : "Music Resumed", CommonColors.BLURPLE)).queue();
 			},
-			() -> interaction.createImmediateResponder()
-				.addEmbed(EmbedUtil.error("No music is currently playing")).setFlags(MessageFlag.EPHEMERAL).respond()
+			() -> context.reply(EmbedUtil.error("No music is currently playing"))
+				.setEphemeral(true)
+				.queue()
 		);
 	}
 
-	private static void play(SlashCommandInteraction interaction, SlashCommandInteractionOptionsProvider options, DiscordApi api) {
-		String identifier = options.getOptionByName("song")
-			.flatMap(SlashCommandInteractionOption::getStringValue)
-			.orElseThrow();
+	private static void play(CommandContext context) {
+		String identifier = context.getStringOption("song").orElseThrow();
 
-		interaction.respondLater().thenAccept(updater -> {
-			Optional<ServerVoiceChannel> channel = interaction.getUser().getConnectedVoiceChannel(interaction.getServer().orElseThrow());
+		Optional<AudioChannel> channel = channel(context);
 
-			if (channel.isEmpty()) {
-				notInVcError(interaction);
-				return;
-			}
+		if (channel.isEmpty()) {
+			notInVcError(context);
+			return;
+		}
 
+		context.defer().queue(hook -> {
 			MusicManager scheduler = MusicManager.getOrCreate(channel.get());
 
 			AudioReference reference = identifier.startsWith("https://") || identifier.startsWith("bcsearch:") ?
@@ -144,14 +177,14 @@ public class MusicCommand implements CommandWithSubcommands {
 				@Override
 				public void trackLoaded(AudioTrack track) {
 					scheduler.push(track);
-					updater.addEmbed(EmbedUtil.titleOnly("Song added to queue", CommonColors.GREEN)).update();
+					hook.sendMessageEmbeds(EmbedUtil.titleOnly("Song added to queue", CommonColors.GREEN)).queue();
 				}
 
 				@Override
 				public void playlistLoaded(AudioPlaylist playlist) {
 					if (!(reference.identifier.contains("search:"))) {
 						for (AudioTrack track : playlist.getTracks()) scheduler.push(track);
-						updater.addEmbed(EmbedUtil.titleOnly("Playlist added to queue", CommonColors.GREEN)).update();
+						hook.sendMessageEmbeds(EmbedUtil.titleOnly("Playlist added to queue", CommonColors.GREEN)).queue();
 					} else {
 						trackLoaded(playlist.getTracks().getFirst());
 					}
@@ -159,23 +192,33 @@ public class MusicCommand implements CommandWithSubcommands {
 
 				@Override
 				public void noMatches() {
-					EmbedUtil.error("No match found", updater);
+					hook.sendMessageEmbeds(EmbedUtil.error("No match found")).queue();
 				}
 
 				@Override
 				public void loadFailed(FriendlyException exception) {
-					EmbedUtil.error(exception.getMessage(), updater);
+					hook.sendMessageEmbeds(EmbedUtil.error(exception.getMessage())).queue();
 				}
 			});
 		});
 	}
 
-	private static void notInVcError(SlashCommandInteraction interaction) {
-		EmbedUtil.error("You are not currently in a voice channel", interaction);
+	private static void notInVcError(CommandContext interaction) {
+		interaction.reply(EmbedUtil.error("You are not currently in a voice channel"))
+			.setEphemeral(true)
+			.queue();
 	}
 
-	private static void noMusicError(SlashCommandInteraction interaction) {
-		EmbedUtil.error("No music is currently playing", interaction);
+	private static void noMusicError(CommandContext interaction) {
+		interaction.reply(EmbedUtil.error("No music is currently playing"))
+			.setEphemeral(true)
+			.queue();
+	}
+
+	private static Optional<AudioChannel> channel(CommandContext interaction) {
+		return interaction.member()
+			.map(Member::getVoiceState)
+			.map(GuildVoiceState::getChannel);
 	}
 }
 

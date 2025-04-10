@@ -1,10 +1,15 @@
 package dev.spiritstudios.ghost.command.tool;
 
 import dev.spiritstudios.ghost.command.Command;
+import dev.spiritstudios.ghost.command.CommandContext;
 import dev.spiritstudios.ghost.registry.Registries;
 import dev.spiritstudios.ghost.util.EmbedUtil;
-import org.javacord.api.DiscordApi;
-import org.javacord.api.interaction.*;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.interactions.AutoCompleteQuery;
+import net.dv8tion.jda.api.interactions.commands.CommandAutoCompleteInteraction;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 
 import java.util.Optional;
 
@@ -15,38 +20,41 @@ public class TagCommand implements Command {
 	}
 
 	@Override
-	public SlashCommandBuilder createSlashCommand() {
-		return SlashCommand.with(getName(), "Send a tag message")
-			.addOption(SlashCommandOption.createStringOption(
+	public SlashCommandData createSlashCommand() {
+		return Commands.slash(getName(), "Send a tag message")
+			.addOption(
+				OptionType.STRING,
 				"name",
 				"The name of the tag",
 				true,
 				true
-			));
+			);
 	}
 
 	@Override
-	public void execute(SlashCommandInteraction interaction, DiscordApi api) {
-		String name = interaction.getOptionByName("name").orElseThrow().getStringValue().orElseThrow();
+	public void execute(CommandContext context) {
+		String name = context.getStringOption("name").orElseThrow();
 
 		Optional<String> tag = Registries.TAG.get(name);
 		if (tag.isEmpty()) {
-			EmbedUtil.error("Tag not found", interaction);
+			context
+				.reply(EmbedUtil.error("Tag not found"))
+				.setEphemeral(true)
+				.queue();
+
 			return;
 		}
 
-		interaction.createImmediateResponder()
-			.setContent(tag.get())
-			.respond();
+		context.reply(tag.get()).queue();
 	}
 
 	@Override
-	public void autoComplete(AutocompleteInteraction interaction, DiscordApi api) {
+	public void autoComplete(CommandAutoCompleteInteraction interaction) {
 		// Since name is the only option here, we can be sure it's what we are trying to autocomplete
-		SlashCommandInteractionOption option = interaction.getFocusedOption();
-		String partial = option.getStringValue().orElseThrow();
+		AutoCompleteQuery option = interaction.getFocusedOption();
+		String partial = option.getValue();
 
-		interaction.respondWithChoices(Registries.TAG.choices().parallelStream()
-			.filter(choice -> choice.getStringValue().orElseThrow().contains(partial)).toList());
+		interaction.replyChoiceStrings(Registries.TAG.keySet().parallelStream()
+			.filter(choice -> choice.contains(partial)).toList()).queue();
 	}
 }

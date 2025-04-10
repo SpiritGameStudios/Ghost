@@ -1,38 +1,21 @@
 package dev.spiritstudios.ghost.util;
 
 import dev.spiritstudios.ghost.data.CommonColors;
-import org.javacord.api.entity.message.Message;
-import org.javacord.api.entity.message.MessageFlag;
-import org.javacord.api.entity.message.embed.EmbedBuilder;
-import org.javacord.api.interaction.SlashCommandInteraction;
-import org.javacord.api.interaction.callback.InteractionOriginalResponseUpdater;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 
 import java.awt.*;
-import java.util.concurrent.CompletableFuture;
 
 public final class EmbedUtil {
-	public static EmbedBuilder titleOnly(String title, Color color) {
+	public static MessageEmbed titleOnly(String title, Color color) {
 		return new EmbedBuilder()
 			.setTitle(title)
-			.setColor(color);
+			.setColor(color)
+			.build();
 	}
 
-	public static EmbedBuilder error(String error) {
+	public static MessageEmbed error(String error) {
 		return titleOnly(error, CommonColors.RED);
-	}
-
-	public static CompletableFuture<InteractionOriginalResponseUpdater> error(String error, SlashCommandInteraction interaction) {
-		return interaction.createImmediateResponder()
-			.addEmbed(error(error))
-			.setFlags(MessageFlag.EPHEMERAL)
-			.respond();
-	}
-
-	public static CompletableFuture<Message> error(String error, InteractionOriginalResponseUpdater updater) {
-		return updater
-			.addEmbed(error(error))
-			.setFlags(MessageFlag.EPHEMERAL)
-			.update();
 	}
 
 	private EmbedUtil() {

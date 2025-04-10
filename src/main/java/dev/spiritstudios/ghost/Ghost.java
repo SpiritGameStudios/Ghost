@@ -1,45 +1,43 @@
 package dev.spiritstudios.ghost;
 
-import dev.spiritstudios.ghost.command.Commands;
+import com.sedmelluq.discord.lavaplayer.jdaudp.NativeAudioSendFactory;
+import dev.spiritstudios.ghost.command.GhostCommands;
 import dev.spiritstudios.ghost.data.CommonColors;
 import dev.spiritstudios.ghost.data.CustomEmoji;
 import dev.spiritstudios.ghost.listener.Listeners;
 import dev.spiritstudios.ghost.registry.Registries;
 import dev.spiritstudios.ghost.util.StringUtil;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.javacord.api.DiscordApi;
-import org.javacord.api.DiscordApiBuilder;
-import org.javacord.api.entity.activity.ActivityType;
-import org.javacord.api.entity.intent.Intent;
-import org.javacord.api.entity.message.MessageBuilder;
-import org.javacord.api.entity.message.embed.EmbedBuilder;
-import org.javacord.api.util.logging.FallbackLoggerConfiguration;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
 public final class Ghost {
 	private static final Logger LOGGER = LogManager.getLogger(Ghost.class);
-	private static DiscordApi api;
+	private static JDA api;
 
-	public static void main(String[] args) {
-		DiscordApiBuilder apiBuilder = new DiscordApiBuilder();
-		apiBuilder
-			.setToken(GhostConfig.INSTANCE.token())
-			.addIntents(Intent.GUILDS);
+	public static void main(String[] args) throws InterruptedException {
+		JDABuilder apiBuilder = JDABuilder
+			.createDefault(GhostConfig.INSTANCE.token())
+			.setAudioSendFactory(new NativeAudioSendFactory());
 
 		Listeners.init();
 		Registries.LISTENER.freeze();
-		Registries.LISTENER.forEach(apiBuilder::addListener);
+		Registries.LISTENER.forEach(apiBuilder::addEventListeners);
 
-		Commands.init();
+		GhostCommands.init();
 		Registries.COMMAND.freeze();
 
 		Registries.TAG.load();
 		Registries.TAG.freeze();
 
-		api = apiBuilder.login().join();
+		api = apiBuilder.build().awaitReady();
 
 		Registries.COMMAND.sendCommands(api);
 
@@ -47,20 +45,11 @@ public final class Ghost {
 		Registries.CUSTOM_EMOJI.freeze();
 
 		if (GhostConfig.INSTANCE.debug()) {
-			FallbackLoggerConfiguration.setDebug(true);
-			api.updateActivity(ActivityType.WATCHING, "Echo struggle");
+			api.getPresence().setActivity(Activity.watching("Echo struggle"));
 			LOGGER.debug("Debug mode enabled");
 		}
 
-		LOGGER.info("Logged in as {}", api.getYourself().getDiscriminatedName());
-	}
-
-	public static <T extends Runnable> void tryRun(T runnable, String message) {
-		try {
-			runnable.run();
-		} catch (Throwable t) {
-			logError(message, t);
-		}
+		LOGGER.info("Logged in as {}", api.getSelfUser().getName());
 	}
 
 	public static void logError(String message, Throwable t) {
@@ -70,22 +59,19 @@ public final class Ghost {
 		PrintWriter writer = new PrintWriter(stackTrace);
 		t.printStackTrace(writer);
 
-		api.getTextChannelById(GhostConfig.INSTANCE.channelId())
-			.ifPresent(channel -> {
-				EmbedBuilder embed = new EmbedBuilder()
-					.setTitle(message)
-					.setDescription("```lisp\n%s```"
-						.formatted(StringUtil.truncate(stackTrace.toString(), 2048)))
-					.addField("Full message", t.getMessage(), false)
-					.setColor(CommonColors.RED);
+		TextChannel channel = api.getTextChannelById(GhostConfig.INSTANCE.channelId());
+		if (channel == null) return;
+		EmbedBuilder embed = new EmbedBuilder()
+			.setTitle(message)
+			.setDescription("```lisp\n%s```"
+				.formatted(StringUtil.truncate(stackTrace.toString(), 2048)))
+			.addField("Full message", t.getMessage(), false)
+			.setColor(CommonColors.RED);
 
-				new MessageBuilder()
-					.setEmbed(embed)
-					.send(channel);
-			});
+		channel.sendMessageEmbeds(embed.build()).queue();
 	}
 
-	public static DiscordApi getApi() {
+	public static JDA getApi() {
 		return api;
 	}
 }

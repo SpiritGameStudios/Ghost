@@ -1,10 +1,9 @@
 package dev.spiritstudios.ghost.command.debug;
 
 import dev.spiritstudios.ghost.command.Command;
-import org.javacord.api.DiscordApi;
-import org.javacord.api.interaction.SlashCommand;
-import org.javacord.api.interaction.SlashCommandBuilder;
-import org.javacord.api.interaction.SlashCommandInteraction;
+import dev.spiritstudios.ghost.command.CommandContext;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 
 public class ErrorCommand implements Command {
 	@Override
@@ -13,12 +12,12 @@ public class ErrorCommand implements Command {
 	}
 
 	@Override
-	public SlashCommandBuilder createSlashCommand() {
-		return SlashCommand.with(getName(), "Throws an error (Debug command)");
+	public SlashCommandData createSlashCommand() {
+		return Commands.slash(getName(), "Throws an error (Debug command)");
 	}
 
 	@Override
-	public void execute(SlashCommandInteraction interaction, DiscordApi api) {
-		throw new RuntimeException("The error command was executed by %s".formatted(interaction.getUser().getName()));
+	public void execute(CommandContext context) {
+		throw new RuntimeException("The error command was executed by %s".formatted(context.user().getName()));
 	}
 }

@@ -2,19 +2,26 @@ package dev.spiritstudios.ghost.command.mod;
 
 import dev.callmeecho.maze.model.Project;
 import dev.spiritstudios.ghost.Ghost;
+import dev.spiritstudios.ghost.command.CommandContext;
 import dev.spiritstudios.ghost.command.CommandWithSubcommands;
-import dev.spiritstudios.ghost.util.EmbedUtil;
 import dev.spiritstudios.ghost.data.CommonColors;
 import dev.spiritstudios.ghost.data.CustomEmoji;
-import dev.spiritstudios.ghost.util.SharedConstants;
+import dev.spiritstudios.ghost.util.EmbedUtil;
 import dev.spiritstudios.ghost.util.HttpHelper;
 import dev.spiritstudios.ghost.util.ImageHelper;
+import dev.spiritstudios.ghost.util.SharedConstants;
 import dev.spiritstudios.ghost.util.StringUtil;
-import org.javacord.api.DiscordApi;
-import org.javacord.api.entity.message.embed.EmbedBuilder;
-import org.javacord.api.interaction.*;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -32,16 +39,19 @@ public class ModrinthCommand implements CommandWithSubcommands {
 	}
 
 	@Override
-	public SlashCommandBuilder createSlashCommand() {
-		return SlashCommand.with(getName(), "Interact with Modrinth", List.of(
-			SlashCommandOption.createSubcommandGroup("projects", "Interact with projects", List.of(
-				SlashCommandOption.createSubcommand(
-					"info",
-					"Get information about a project",
-					List.of(SlashCommandOption.createStringOption("slug", "The slug of the mod", true))
+	public SlashCommandData createSlashCommand() {
+		return Commands.slash(getName(), "Interact with Modrinth")
+			.addSubcommandGroups(new SubcommandGroupData("projects", "Interact with projects")
+				.addSubcommands(new SubcommandData(
+						"info",
+						"Get information about a project"
+					).addOption(
+						OptionType.STRING,
+						"slug", "The slug of the mod",
+						true
+					)
 				)
-			))
-		));
+			);
 	}
 
 	private static class Projects {
@@ -52,13 +62,14 @@ public class ModrinthCommand implements CommandWithSubcommands {
 			Project.Type.SHADER, "Shader Pack"
 		);
 
-		public static void info(SlashCommandInteraction interaction, SlashCommandInteractionOptionsProvider options, DiscordApi api) {
-			String slug = options.getOptionByName("slug")
-				.flatMap(SlashCommandInteractionOption::getStringValue)
-				.orElseThrow();
+		public static void info(CommandContext context) {
+			String slug = context.getStringOption("slug").orElseThrow();
 
-			interaction.respondLater().thenCompose(updater -> SharedConstants.MODRINTH_API.project().get(slug).thenApply(project -> {
-				if (project == null) return updater.addEmbed(EmbedUtil.error("Mod not found.")).update();
+			context.defer().queue(hook -> SharedConstants.MODRINTH_API.project().get(slug).thenAccept(project -> {
+				if (project == null) {
+					hook.sendMessageEmbeds(EmbedUtil.error("Mod not found.")).queue();
+					return;
+				}
 
 				List<String> categories = StringUtil.capitalize(project.categories());
 
@@ -67,62 +78,57 @@ public class ModrinthCommand implements CommandWithSubcommands {
 					.setUrl("https://modrinth.com/mod/%s".formatted(project.slug()))
 					.setDescription(project.description())
 					.addField("Categories", String.join("\n", categories), true)
-					.setTimestampToNow()
-					.setFooter(PROJECT_TYPE_NAMES.get(project.projectType()) + " on Modrinth", CustomEmoji.MODRINTH.getImage());
-
+					.setTimestamp(Instant.now())
+					.setFooter(PROJECT_TYPE_NAMES.get(project.projectType()) + " on Modrinth", CustomEmoji.MODRINTH.getImageUrl());
 
 				if (project.loaders() != null) {
 					List<String> loaders = StringUtil.capitalize(project.loaders());
 					loaders.replaceAll(loader -> switch (loader) {
-						case "Fabric" -> CustomEmoji.FABRIC.getMentionTag();
-						case "Forge" -> CustomEmoji.LEXFORGE.getMentionTag();
-						case "Neoforge" -> CustomEmoji.NEOFORGE.getMentionTag();
-						case "Quilt" -> CustomEmoji.QUILT.getMentionTag();
-						case "Paper" -> CustomEmoji.PAPER.getMentionTag();
-						case "Spigot" -> CustomEmoji.SPIGOT.getMentionTag();
-						case "Velocity" -> CustomEmoji.VELOCITY.getMentionTag();
-						case "Bukkit" -> CustomEmoji.BUKKIT.getMentionTag();
-						case "Minecraft" -> CustomEmoji.MINECRAFT.getMentionTag();
-						case "Purpur" -> CustomEmoji.PURPUR.getMentionTag();
-						case "Waterfall" -> CustomEmoji.WATERFALL.getMentionTag();
-						case "Sponge" -> CustomEmoji.SPONGE.getMentionTag();
-						case "Rift" -> CustomEmoji.RIFT.getMentionTag();
-						case "Modloader" -> CustomEmoji.MODLOADER.getMentionTag();
-						case "Liteloader" -> CustomEmoji.LITELOADER.getMentionTag();
-						case "Folia" -> CustomEmoji.FOLIA.getMentionTag();
-						case "Bungeecord" -> CustomEmoji.BUNGEECORD.getMentionTag();
-						default -> CustomEmoji.UNKNOWN.getMentionTag();
+						case "Fabric" -> CustomEmoji.FABRIC.getAsMention();
+						case "Forge" -> CustomEmoji.LEXFORGE.getAsMention();
+						case "Neoforge" -> CustomEmoji.NEOFORGE.getAsMention();
+						case "Quilt" -> CustomEmoji.QUILT.getAsMention();
+						case "Paper" -> CustomEmoji.PAPER.getAsMention();
+						case "Spigot" -> CustomEmoji.SPIGOT.getAsMention();
+						case "Velocity" -> CustomEmoji.VELOCITY.getAsMention();
+						case "Bukkit" -> CustomEmoji.BUKKIT.getAsMention();
+						case "Minecraft" -> CustomEmoji.MINECRAFT.getAsMention();
+						case "Purpur" -> CustomEmoji.PURPUR.getAsMention();
+						case "Waterfall" -> CustomEmoji.WATERFALL.getAsMention();
+						case "Sponge" -> CustomEmoji.SPONGE.getAsMention();
+						case "Rift" -> CustomEmoji.RIFT.getAsMention();
+						case "Modloader" -> CustomEmoji.MODLOADER.getAsMention();
+						case "Liteloader" -> CustomEmoji.LITELOADER.getAsMention();
+						case "Folia" -> CustomEmoji.FOLIA.getAsMention();
+						case "Bungeecord" -> CustomEmoji.BUNGEECORD.getAsMention();
+						default -> CustomEmoji.UNKNOWN.getAsMention();
 					} + " " + loader);
 
-					embed.addInlineField("Loaders", String.join("\n", loaders));
+					embed.addField("Loaders", String.join("\n", loaders), true);
 				}
 
 				if (project.gameVersions() != null) {
-					embed.addInlineField("Versions", StringUtil.truncate(String.join("\n", project.gameVersions()), 256));
+					embed.addField("Versions", StringUtil.truncate(String.join("\n", project.gameVersions()), 256), true);
 				}
 
+				embed.setColor(CommonColors.BLURPLE);
 
 				if (project.iconUrl() != null) {
 					embed.setThumbnail(project.iconUrl());
-					return HttpHelper.getImage(project.iconUrl())
-						.thenCompose(icon -> {
-							embed.setColor(new Color(ImageHelper.getCommonColor(icon)));
-							return updater.addEmbed(embed).update();
-						}).whenComplete((ignored, throwable) -> {
-							if (throwable == null) return;
 
-							Ghost.logError("", throwable);
-						});
+					try {
+						BufferedImage image = HttpHelper.getImage(project.iconUrl());
+						embed.setColor(new Color(ImageHelper.getCommonColor(image)));
+					} catch (IOException ignored) {
+
+					}
 				}
 
-
-				embed.setColor(CommonColors.BLURPLE);
-				return updater.addEmbed(embed).update();
-			})).whenComplete((ignored, throwable) -> {
-				if (throwable == null) return;
-
+				hook.sendMessageEmbeds(embed.build()).queue();
+			}).exceptionally(throwable -> {
 				Ghost.logError("", throwable);
-			});
+				return null;
+			}));
 		}
 	}
 }
