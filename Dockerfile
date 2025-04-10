@@ -1,6 +1,6 @@
 FROM gradle:jdk21
 WORKDIR /app
-CMD ["./gradlew", "installDist"]
+RUN "./gradlew installDist"
 COPY ./build /app/build
 
 FROM eclipse-temurin:21
