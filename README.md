@@ -1,6 +1,6 @@
 # Ghost
 
-<img src=".github/assets/javacord.svg" alt="Built with Javacord" />
+<img src=".github/assets/jda.svg" alt="Built with Javacord" />
 
 <img alt="Made by Spirit Studios" src="https://raw.githubusercontent.com/SpiritGameStudios/.github/main/assets/brand/badge/compact.svg">
 
