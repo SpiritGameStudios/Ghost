@@ -51,6 +51,7 @@ distributions {
 }
 
 kordEx {
+	jvmTarget = 21
 	kordExVersion = libs.versions.kordex.asProvider()
 
 	bot {
