@@ -1,7 +1,6 @@
 package dev.spiritstudios.ghost.extension
 
 import dev.kord.common.entity.Permission
-import dev.kord.common.entity.Permissions
 import dev.kord.core.behavior.createEmoji
 import dev.kord.core.entity.effectiveName
 import dev.kord.rest.Image
@@ -12,6 +11,7 @@ import dev.kordex.core.DISCORD_RED
 import dev.kordex.core.DISCORD_YELLOW
 import dev.kordex.core.DiscordRelayedException
 import dev.kordex.core.checks.anyGuild
+import dev.kordex.core.checks.hasPermission
 import dev.kordex.core.commands.Arguments
 import dev.kordex.core.commands.converters.impl.optionalUser
 import dev.kordex.core.commands.converters.impl.string
@@ -93,7 +93,7 @@ class ToolsExtension : Extension() {
 
 			check { anyGuild() }
 			check { requireBotPermissions(Permission.CreateGuildExpressions) }
-			check { requirePermission(Permission.CreateGuildExpressions) }
+			check { hasPermission(Permission.CreateGuildExpressions) }
 
 			action {
 				guild!!.createEmoji( // Safe assertion, we already do a check above
