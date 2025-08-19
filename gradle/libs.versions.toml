@@ -1,23 +1,35 @@
 [versions]
-annotations = "24.1.0"
 fastutil = "8.5.14"
 log4j = "2.24.0"
-jda = "5.3.0"
+log4j_kotlin = "1.5.0"
+
 webp-imageio = "0.1.6"
-datafixerupper = "8.0.16"
-maze = "1.0.0-SNAPSHOT"
-lavaplayer = "2.2.2"
-udpqueue = "0.2.9"
+lavaplayer = "2.2.4"
+kotlin = "2.2.10"
+
+kord = "0.15.0"
+kordex = "2.3.4-SNAPSHOT"
+kordex-gradle = "1.6.1"
 
 [libraries]
-annotations = { module = "org.jetbrains:annotations", version.ref = "annotations" }
-fastutil = { module = "it.unimi.dsi:fastutil", version.ref = "fastutil" }
-jda = { group = "net.dv8tion", name = "JDA", version.ref = "jda" }
-log4j_core = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
-log4j_slf4j = { module = "org.apache.logging.log4j:log4j-slf4j2-impl", version.ref = "log4j" }
+fastutil = { group = "it.unimi.dsi", name = "fastutil", version.ref = "fastutil" }
+kord_core = { group = "dev.kord", name = "kord-core", version.ref = "kord" }
+kord_voice = { group = "dev.kord", name = "kord-voice", version.ref = "kord" }
+
+log4j_core = { group = "org.apache.logging.log4j", name = "log4j-core", version.ref = "log4j" }
+log4j_kotlin = { group = "org.apache.logging.log4j", name = "log4j-api-kotlin", version.ref = "log4j_kotlin" }
+log4j_slf4j = { group = "org.apache.logging.log4j", name = "log4j-slf4j2-impl", version.ref = "log4j" }
+
+kotlin_reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
+
 webp_imageio = { module = "org.sejda.imageio:webp-imageio", version.ref = "webp-imageio" }
-datafixerupper = { module = "com.mojang:datafixerupper", version.ref = "datafixerupper" }
-maze = { module = "dev.callmeecho:maze", version.ref = "maze" }
 lavaplayer = { module = "dev.arbjerg:lavaplayer", version.ref = "lavaplayer" }
-udpqueue_linux_x86 = { module = "club.minnced:udpqueue-native-linux-x86-64", version.ref = "udpqueue" }
-udpqueue_windows_x86 = { module = "club.minnced:udpqueue-native-win-x86-64", version.ref = "udpqueue" }
+
+[plugins]
+kotlin_jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin_serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+
+kordex = { id = "dev.kordex.gradle.kordex", version.ref = "kordex-gradle" }
+
+[bundles]
+kord = [ "kord_core", "kord_voice" ]

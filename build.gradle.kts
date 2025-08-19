@@ -1,9 +1,15 @@
+import dev.kordex.gradle.plugins.kordex.DataCollection
+
 plugins {
-    application
+	distribution
+
+	alias(libs.plugins.kotlin.jvm)
+	alias(libs.plugins.kotlin.serialization)
+	alias(libs.plugins.kordex)
 }
 
 group = "dev.spiritstudios"
-version = "1.0.0-SNAPSHOT"
+version = "1.0.0"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
@@ -11,44 +17,52 @@ java {
 }
 
 repositories {
-
     mavenCentral()
-    maven("https://maven.lavalink.dev/releases")
-    maven("https://libraries.minecraft.net")
-    maven("https://maven.lukebemish.dev/releases")
+
 	maven("https://maven.spiritstudios.dev/snapshots")
+	maven("https://repo.kord.dev/snapshots")
+	maven("https://maven.lavalink.dev/releases")
+    maven("https://maven.lukebemish.dev/releases")
 }
 
 dependencies {
-    compileOnly(libs.annotations)
-
-    implementation(libs.jda)
-
     implementation(libs.log4j.core)
-    implementation(libs.log4j.slf4j)
+	implementation(libs.kotlin.reflect)
+	implementation(libs.log4j.kotlin)
+	implementation(libs.log4j.slf4j)
 
-    implementation(libs.datafixerupper)
+	implementation(libs.bundles.kord)
+
     implementation(libs.fastutil)
     implementation(libs.webp.imageio)
-    implementation(libs.maze)
 
     implementation(libs.lavaplayer)
-
-	implementation(libs.udpqueue.linux.x86)
-	implementation(libs.udpqueue.windows.x86)
 }
 
-application {
-    mainClass.set("dev.spiritstudios.ghost.Ghost")
+distributions {
+	main {
+		distributionBaseName = project.name
+
+		contents {
+			from("LICENSE")
+			exclude("README.md")
+		}
+	}
 }
 
-tasks.withType<Jar>() {
-    manifest.attributes["Main-Class"] = "dev.spiritstudios.ghost.Ghost"
-    val dependencies = configurations
-        .runtimeClasspath
-        .get()
-        .map(::zipTree)
-    from(dependencies)
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
+kordEx {
+	kordExVersion = libs.versions.kordex.asProvider()
 
+	bot {
+		dataCollection(DataCollection.None)
+
+		module("func-phishing")
+
+		mainClass = "dev.spiritstudios.ghost.GhostKt"
+	}
+
+	i18n {
+		classPackage = "dev.spiritstudios.ghost.i18n"
+		translationBundle = "ghost.strings"
+	}
+}
