@@ -1,5 +1,5 @@
 [versions]
-fastutil = "8.5.14"
+fastutil = "8.5.16"
 log4j = "2.24.0"
 log4j_kotlin = "1.5.0"
 
@@ -7,9 +7,9 @@ webp-imageio = "0.1.6"
 lavaplayer = "2.2.4"
 kotlin = "2.2.10"
 
-kord = "0.15.0"
-kordex = "2.3.4-SNAPSHOT"
-kordex-gradle = "1.6.1"
+kord = "0.16.0-SNAPSHOT"
+kordex = "2.3.5-SNAPSHOT"
+kordex-gradle = "1.7.3"
 
 [libraries]
 fastutil = { group = "it.unimi.dsi", name = "fastutil", version.ref = "fastutil" }

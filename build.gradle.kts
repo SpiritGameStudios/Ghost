@@ -20,7 +20,7 @@ repositories {
     mavenCentral()
 
 	maven("https://maven.spiritstudios.dev/snapshots")
-	maven("https://repo.kord.dev/snapshots")
+	maven("https://central.sonatype.com/repository/maven-snapshots/")
 	maven("https://maven.lavalink.dev/releases")
     maven("https://maven.lukebemish.dev/releases")
 }
@@ -47,6 +47,12 @@ distributions {
 			from("LICENSE")
 			exclude("README.md")
 		}
+	}
+}
+
+kotlin {
+	compilerOptions {
+		optIn.add("kotlin.time.ExperimentalTime")
 	}
 }
 
