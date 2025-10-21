@@ -14,4 +14,4 @@ Essential has many other ~~features~~issues that make it even more undesirable, 
 - Breaking compatibility with many content mods, which would be fine if they actually let you fix it.
 - Requiring acceptance of a ToS and Privacy Policy which allows them to collect tons of unnecessary data from you.
 
-A constantly updated list of why not to use Essential, as well as alternatives to Essential for later versions, can be found [here](https://notessential.blurry.gay/).
+A constantly updated list of why not to use Essential, as well as alternatives to Essential for later versions, can be found [here](https://alternatives.microcontrollers.dev/latest/essential/).
