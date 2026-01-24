@@ -1,15 +1,17 @@
 [versions]
-fastutil = "8.5.16"
-log4j = "2.24.0"
+fastutil = "8.5.18"
+log4j = "2.25.3"
 log4j_kotlin = "1.5.0"
 
 webp-imageio = "0.1.6"
-lavaplayer = "2.2.4"
-kotlin = "2.2.10"
+lavaplayer = "2.2.6"
+kotlin = "2.2.20"
 
-kord = "0.16.0-SNAPSHOT"
-kordex = "2.3.5-SNAPSHOT"
-kordex-gradle = "1.7.3"
+kord = "0.17.0-SNAPSHOT"
+kordex = "2.4.1-SNAPSHOT"
+
+kordex-gradle = "1.9.0"
+kordex-i18n = "1.1.1"
 
 [libraries]
 fastutil = { group = "it.unimi.dsi", name = "fastutil", version.ref = "fastutil" }
@@ -30,6 +32,7 @@ kotlin_jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin_serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 
 kordex = { id = "dev.kordex.gradle.kordex", version.ref = "kordex-gradle" }
+i18n = { id = "dev.kordex.gradle.i18n", version.ref = "kordex-i18n" }
 
 [bundles]
 kord = [ "kord_core", "kord_voice" ]

@@ -5,7 +5,9 @@ plugins {
 
 	alias(libs.plugins.kotlin.jvm)
 	alias(libs.plugins.kotlin.serialization)
+
 	alias(libs.plugins.kordex)
+	alias(libs.plugins.i18n)
 }
 
 group = "dev.spiritstudios"
@@ -67,9 +69,8 @@ kordEx {
 
 		mainClass = "dev.spiritstudios.ghost.GhostKt"
 	}
+}
 
-	i18n {
-		classPackage = "dev.spiritstudios.ghost.i18n"
-		translationBundle = "ghost.strings"
-	}
+i18n {
+	bundle("ghost.strings", "dev.spiritstudios.ghost.i18n")
 }

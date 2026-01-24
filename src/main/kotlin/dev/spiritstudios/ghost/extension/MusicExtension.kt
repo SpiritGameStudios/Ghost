@@ -43,10 +43,12 @@ import dev.kordex.core.extensions.publicSlashCommand
 import dev.kordex.core.i18n.toKey
 import dev.spiritstudios.ghost.util.commonColor
 import dev.spiritstudios.ghost.i18n.Translations
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import javax.imageio.ImageIO
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -245,12 +247,14 @@ suspend fun EmbedBuilder.trackInfo(track: AudioTrack, kord: Kord) {
 			url = track.info.artworkUrl
 		}
 
-		val image = ImageIO.read(
-			Image.fromUrl(
-				kord.resources.httpClient,
-				track.info.artworkUrl
-			).data.inputStream()
-		)
+		val image = withContext(Dispatchers.IO) {
+			ImageIO.read(
+				Image.fromUrl(
+					kord.resources.httpClient,
+					track.info.artworkUrl
+				).data.inputStream()
+			)
+		}
 
 		color = Color(image.commonColor())
 	}
@@ -302,7 +306,7 @@ class MusicManager private constructor(
 	}
 
 	suspend fun push(query: AudioReference): List<AudioTrack> {
-		val tracks = suspendCoroutine {
+		val tracks = suspendCancellableCoroutine {
 			playerManager.loadItem(query, object : AudioLoadResultHandler {
 				override fun trackLoaded(track: AudioTrack) {
 					it.resume(listOf(track))

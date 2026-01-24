@@ -63,7 +63,7 @@ class ToolsExtension : Extension() {
 
 			action {
 				val target = arguments.target ?: user.asUser()
-				val avatar = target.avatar ?: throw DiscordRelayedException(Translations.Command.Avatar.Error.noAvatar);
+				val avatar = target.avatar ?: throw DiscordRelayedException(Translations.Command.Avatar.Error.noAvatar)
 
 				respond {
 					embed {

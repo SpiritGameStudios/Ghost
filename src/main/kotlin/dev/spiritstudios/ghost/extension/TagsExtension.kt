@@ -10,7 +10,7 @@ import okio.FileSystem
 import okio.Path.Companion.toPath
 
 val tags = buildMap {
-	var tagsPath = "/tags/".toPath();
+	var tagsPath = "/tags/".toPath()
 
 	val files = FileSystem.RESOURCES.list(tagsPath)
 
