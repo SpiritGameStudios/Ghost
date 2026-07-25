@@ -1,38 +1,39 @@
 [versions]
-fastutil = "8.5.18"
-log4j = "2.25.3"
-log4j_kotlin = "1.5.0"
+kotlin = "2.3.10"
+kord = "0.18.1"
+kordex = "2.5.0-SNAPSHOT"
 
-webp-imageio = "0.1.6"
-lavaplayer = "2.2.6"
-kotlin = "2.2.20"
-
-kord = "0.17.0-SNAPSHOT"
-kordex = "2.4.1-SNAPSHOT"
-
-kordex-gradle = "1.9.0"
+kordex-gradle = "1.9.2"
 kordex-i18n = "1.1.1"
 
+webp-imageio = "0.1.6"
+lavaplayer = "2.2.7"
+
+kotlin-logging = "8.0.4"
+slf4j = "2.0.18"
+log4j = "2.26.1"
+
 [libraries]
-fastutil = { group = "it.unimi.dsi", name = "fastutil", version.ref = "fastutil" }
 kord_core = { group = "dev.kord", name = "kord-core", version.ref = "kord" }
 kord_voice = { group = "dev.kord", name = "kord-voice", version.ref = "kord" }
 
-log4j_core = { group = "org.apache.logging.log4j", name = "log4j-core", version.ref = "log4j" }
-log4j_kotlin = { group = "org.apache.logging.log4j", name = "log4j-api-kotlin", version.ref = "log4j_kotlin" }
-log4j_slf4j = { group = "org.apache.logging.log4j", name = "log4j-slf4j2-impl", version.ref = "log4j" }
-
-kotlin_reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
-
 webp_imageio = { module = "org.sejda.imageio:webp-imageio", version.ref = "webp-imageio" }
 lavaplayer = { module = "dev.arbjerg:lavaplayer", version.ref = "lavaplayer" }
+
+log4j_core = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
+log4j_slf4j = { module = "org.apache.logging.log4j:log4j-slf4j2-impl", version.ref = "log4j" }
+slf4j_api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+kotlinlogging_jvm = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "kotlin-logging" }
 
 [plugins]
 kotlin_jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin_serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 
 kordex = { id = "dev.kordex.gradle.kordex", version.ref = "kordex-gradle" }
-i18n = { id = "dev.kordex.gradle.i18n", version.ref = "kordex-i18n" }
+kordex_docker = { id = "dev.kordex.gradle.docker", version.ref = "kordex-gradle" }
+kordex_i18n = { id = "dev.kordex.gradle.i18n", version.ref = "kordex-i18n" }
 
 [bundles]
-kord = [ "kord_core", "kord_voice" ]
+kord = ["kord_core", "kord_voice"]
+logging = ["kotlinlogging_jvm", "slf4j_api"]
+log4j = ["log4j_core", "log4j_slf4j"]

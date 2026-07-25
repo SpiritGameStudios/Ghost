@@ -4,7 +4,7 @@ import dev.kord.common.entity.Permission
 import dev.kord.core.behavior.createEmoji
 import dev.kord.core.entity.effectiveName
 import dev.kord.rest.Image
-import dev.kord.rest.builder.message.actionRow
+import dev.kord.rest.builder.component.actionRow
 import dev.kord.rest.builder.message.embed
 import dev.kordex.core.DISCORD_GREEN
 import dev.kordex.core.DISCORD_RED

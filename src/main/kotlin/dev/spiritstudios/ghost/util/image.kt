@@ -1,12 +1,11 @@
 package dev.spiritstudios.ghost.util
 
-import it.unimi.dsi.fastutil.ints.Int2IntArrayMap
 import java.awt.Image
 import java.awt.image.BufferedImage
 
 fun Image.commonColor(): Int {
 	val image = toBuffered(this.getScaledInstance(32, 32, Image.SCALE_AREA_AVERAGING))
-	val colorMap = Int2IntArrayMap(32 * 32)
+	val colorMap = HashMap<Int, Int>(32 * 32)
 
 	for (x in 0..31) {
 		for (y in 0..31) {
@@ -18,11 +17,11 @@ fun Image.commonColor(): Int {
 		}
 	}
 
-	val map = colorMap.int2IntEntrySet().sortedWith { o1, o2 ->
-		o2!!.intValue.compareTo(o1!!.intValue)
+	val map = colorMap.entries.sortedWith { o1, o2 ->
+		o2.value.compareTo(o1.value)
 	}
 
-	return if (map.isEmpty()) 0xFF000000.toInt() else map.first().intKey
+	return if (map.isEmpty()) 0xFF000000.toInt() else map.first().key
 }
 
 fun toBuffered(image: Image): BufferedImage {

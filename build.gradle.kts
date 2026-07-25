@@ -1,3 +1,4 @@
+import dev.kordex.gradle.plugins.docker.file.*
 import dev.kordex.gradle.plugins.kordex.DataCollection
 
 plugins {
@@ -7,38 +8,33 @@ plugins {
 	alias(libs.plugins.kotlin.serialization)
 
 	alias(libs.plugins.kordex)
-	alias(libs.plugins.i18n)
+	alias(libs.plugins.kordex.docker)
+	alias(libs.plugins.kordex.i18n)
 }
 
 group = "dev.spiritstudios"
 version = "1.0.0"
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
 }
 
 repositories {
     mavenCentral()
 
-	maven("https://maven.spiritstudios.dev/snapshots")
 	maven("https://central.sonatype.com/repository/maven-snapshots/")
 	maven("https://maven.lavalink.dev/releases")
-    maven("https://maven.lukebemish.dev/releases")
 }
 
 dependencies {
-    implementation(libs.log4j.core)
-	implementation(libs.kotlin.reflect)
-	implementation(libs.log4j.kotlin)
-	implementation(libs.log4j.slf4j)
-
 	implementation(libs.bundles.kord)
 
-    implementation(libs.fastutil)
-    implementation(libs.webp.imageio)
+	implementation(libs.webp.imageio)
+	implementation(libs.lavaplayer)
 
-    implementation(libs.lavaplayer)
+	implementation(libs.bundles.logging)
+	implementation(libs.bundles.log4j)
 }
 
 distributions {
@@ -59,7 +55,7 @@ kotlin {
 }
 
 kordEx {
-	jvmTarget = 21
+	jvmTarget = 25
 	kordExVersion = libs.versions.kordex.asProvider()
 
 	bot {
@@ -73,4 +69,52 @@ kordEx {
 
 i18n {
 	bundle("ghost.strings", "dev.spiritstudios.ghost.i18n")
+}
+
+docker {
+	file(rootProject.file("Dockerfile"))
+
+	commands {
+		from("openjdk:25-jdk-slim")
+
+		emptyLine()
+
+		runShell("mkdir -p /bot/plugins")
+		runShell("mkdir -p /bot/data")
+		runShell("mkdir -p /dist/out")
+
+		emptyLine()
+
+		volume("/bot/data")
+		volume("/bot/plugins")
+
+		emptyLine()
+
+		copy("build/distributions/$name-$version.tar", "/dist")
+
+		emptyLine()
+
+		runShell("tar -xf /dist/$name-$version.tar -C /dist/out")
+
+		if (file("src/main/dist/plugins").isDirectory) {
+			runShell("mv /dist/out/$name-$version/plugins/* /bot/plugins")
+		}
+
+		runShell("chmod +x /dist/out/$name-$version/bin/$name")
+
+		emptyLine()
+
+		runShell("rm /dist/$name-$version.tar")
+
+		emptyLine()
+		workdir("/bot")
+
+		emptyLine()
+
+		env {
+			add("JAVA_OPTS", "-XX:+UseZGC -XX:+UseCompactObjectHeaders -XX:+UseStringDeduplication")
+		}
+
+		entryPointExec("/dist/out/$name-$version/bin/$name")
+	}
 }

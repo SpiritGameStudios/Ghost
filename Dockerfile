@@ -1,7 +1,7 @@
 # escape=\
 # syntax=docker/dockerfile:1
 
-FROM openjdk:21-jdk-slim
+FROM openjdk:25-jdk-slim
 
 RUN mkdir -p /bot/plugins
 RUN mkdir -p /bot/data
@@ -19,5 +19,5 @@ RUN rm /dist/Ghost-1.0.0.tar
 
 WORKDIR /bot
 
-ENV JAVA_OPTS="-XX:+UseZGC -XX:+ZGenerational -XX:+DisableExplicitGC"
+ENV JAVA_OPTS="-XX:+UseZGC -XX:+UseCompactObjectHeaders -XX:+UseStringDeduplication"
 ENTRYPOINT [ "/dist/out/Ghost-1.0.0/bin/Ghost" ]
