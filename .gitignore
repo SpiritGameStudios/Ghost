@@ -23,3 +23,6 @@ config.json
 
 !gradle-wrapper.jar
 .env
+
+# Nix
+result
