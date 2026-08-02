@@ -19,5 +19,5 @@ RUN rm /dist/Ghost-1.0.0.tar
 
 WORKDIR /bot
 
-ENV JAVA_OPTS="-XX:+UseZGC -XX:+UseCompactObjectHeaders -XX:+UseStringDeduplication"
+ENV JAVA_OPTS="-XX:+UseSerialGC -XX:+UseCompactObjectHeaders -XX:+UseStringDeduplication"
 ENTRYPOINT [ "/dist/out/Ghost-1.0.0/bin/Ghost" ]

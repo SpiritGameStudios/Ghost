@@ -112,7 +112,7 @@ docker {
 		emptyLine()
 
 		env {
-			add("JAVA_OPTS", "-XX:+UseZGC -XX:+UseCompactObjectHeaders -XX:+UseStringDeduplication")
+			add("JAVA_OPTS", "-XX:+UseSerialGC -XX:+UseCompactObjectHeaders -XX:+UseStringDeduplication")
 		}
 
 		entryPointExec("/dist/out/$name-$version/bin/$name")
