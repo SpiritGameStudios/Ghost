@@ -1,7 +1,7 @@
 # escape=\
 # syntax=docker/dockerfile:1
 
-FROM openjdk:25-jdk-slim
+FROM eclipse-temurin:25
 
 RUN mkdir -p /bot/plugins
 RUN mkdir -p /bot/data

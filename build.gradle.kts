@@ -75,7 +75,7 @@ docker {
 	file(rootProject.file("Dockerfile"))
 
 	commands {
-		from("openjdk:25-jdk-slim")
+		from("eclipse-temurin:25")
 
 		emptyLine()
 
